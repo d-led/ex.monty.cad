@@ -48,12 +48,40 @@ a record stores.
 make. The answer names the file, the nodes, the features held, and how many nodes
 each feature family contributed.
 
+## Writing a plugin: the generators
+
+A run is assembled from modules — a motor policy that decides where to sense
+next, a sensor transform that turns one observation into a percept. Each has a
+contract in Monty's own behaviour, and a cluster that will call it wants a
+description of it first. Two generators write both halves, so what you fill in is
+the decision and not the wiring:
+
+    mix monty_cad.gen.policy follow_chamfers
+    mix monty_cad.gen.transform surface_smoother
+
+Each writes a module and a test:
+
+| | `follow_chamfers` |
+| --- | --- |
+| the module | `lib/<your_app>/plugins/follow_chamfers.ex` — `Monty.Frameworks.Models.MotorPolicies.MotorPolicy`'s callbacks and `describe/0` |
+| the test | `test/<your_app>/plugins/follow_chamfers_test.exs` — it describes itself, it is a motor policy, it forgets between episodes |
+
+`call/6` and `call/3` raise with a sentence saying what to answer, on purpose: a
+generated body that looks like an answer is a decision nobody made. The policy is
+`:owner_only` (it reads a B-rep, and a B-rep handle cannot leave its node); change
+that in `describe/0` if yours does not, and the test will follow the description.
+
+The description is `MontyCad.Plugin`'s contract — kinds, placements, needs — and
+`MontyCad.Plugin.conforms?/1` says what is wrong with one that a cluster cannot
+use. A cluster asks over the protocol; this package asks the same question in a
+test.
+
 ## Install
 
 ```elixir
 def deps do
   [
-    {:ex_monty_cad, "~> 0.1"}
+    {:ex_monty_cad, "~> 0.2"}
   ]
 end
 ```

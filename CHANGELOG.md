@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.0
+
+Code generators, and the contract they generate against.
+
+### Added
+
+- **`MontyCad.Plugin`** — what a plugin tells a cluster about itself
+  (`name`, `kind`, `version`, `placement`, `needs`), and `conforms?/1`, which says
+  what is wrong with a description rather than only that something is.
+- **`mix monty_cad.gen.policy NAME`** — a motor policy: the callbacks
+  `Monty.Frameworks.Models.MotorPolicies.MotorPolicy` requires, the `describe/0` a
+  cluster asks for, and a test that holds both. `call/6` raises until the decision
+  is written.
+- **`mix monty_cad.gen.transform NAME`** — a sensor transform: the one callback
+  `Monty.SensorModules.SensorModule.Transform` requires, and a test that asserts
+  the module is a transform.
+- **`MontyCad.Gen`** — the shared half: plugin names, the host application's
+  namespace, and formatted output, so a generated file is never the first thing a
+  formatter has to touch.
+
 ## 0.1.0
 
 The first release: a Monty graph memory built from a STEP part.
