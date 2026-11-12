@@ -1,0 +1,83 @@
+# A graph memory for a run, from a drawing.
+
+# Monty learns an object by sensing it, and its pretrained memories come from
+# episodes. A CAD part has already been explored: its surface is exact, and the
+# recognition names every face, so a node's label is a fact rather than a
+# conclusion. This package is the join between the two — the part on one side,
+# Monty's own percept and its library format on the other.
+
+```elixir
+{:ok, part} = Quiddity.open("bracket.step")
+
+# What a sensor module perceives here:
+{:ok, camera} = Quiddity.Camera.patch([15.0, 0.0, 13.0], [0.0, 0.0, 1.0], distance: 5.0)
+{:ok, frame} = Quiddity.frame(part, camera)
+{:ok, message} = MontyCad.Percept.message(frame)
+
+MontyCad.Percept.node_features(message)
+#=> %{"pose_vectors" => [...], "principal_curvatures_log" => [0.0, 0.0], ...}
+
+# The library a run loads:
+{:ok, written} = MontyCad.Training.write(part, "bracket", "bracket.jsonl.gz", spacing: 2.0)
+written.nodes
+#=> 186
+```
+
+The percept is Monty's own code — `Monty.Frameworks.Models.SensorModules.ObservationProcessor`
+over the frame — not a re-implementation, so a node trained from a part is the
+percept a run would have made. `docs/bridge.md` says exactly what is faithful and
+what is not.
+
+## The three modules
+
+| Module | What it answers |
+| --- | --- |
+| `MontyCad.Percept` | A `Quiddity.Frame` as the observation a sensor module reads: `semantic_3d`, shaded `rgba`, `cam_to_world`, and the message Monty builds from them |
+| `MontyCad.Training` | Visits over the part's surface, one percept each, with exact labels from the recognition |
+| `MontyCad.Library` | The file: gzipped JSON lines, one record per node, in the shape `GraphLM` reads |
+
+`MontyCad.Percept.node_features/1` merges the morphological and non-morphological
+features the way `GraphLM.select_features_to_use/2` does — those are the columns
+a record stores.
+
+## From a shell
+
+    mix monty_cad.train bracket.step --object bracket --out bracket.jsonl.gz
+
+`--spacing` sets the millimetres between visits, `--limit` the most visits to
+make. The answer names the file, the nodes, the features held, and how many nodes
+each feature family contributed.
+
+## Install
+
+```elixir
+def deps do
+  [
+    {:ex_monty_cad, "~> 0.1"}
+  ]
+end
+```
+
+This package is Elixir only, but `ex_quiddity` builds a Rust engine when it is
+compiled, so **building wants a Rust toolchain and running wants none**.
+
+## Limits, said out loud
+
+- A CAD frame is perfect: no sensor noise, no occlusion from a real probe. A
+  library trained from one is a library trained from a drawing; `docs/bridge.md`
+  says what that costs.
+- A library holds the part, densely and evenly. It does not hold an exploration
+  policy — that is what a training episode is, and this package does not replace
+  one.
+- The labels are exact because the recognition named the faces, not because
+  anything was inferred. Where quiddity could not prove a feature,
+  `Quiddity.Recognition.unexplained_faces/1` is where that is visible.
+- A node whose patch saw too little surface is skipped and counted, not stored:
+  an empty percept is not a node.
+
+## Licence
+
+MPL-2.0 (`LICENSE`). The dependencies keep their own: `ex_quiddity` is MPL-2.0,
+`ex_tbp_monty_core` is MIT (the Thousand Brains Project's Monty, reimplemented on
+the BEAM), and the engine under `ex_quiddity` — quiddity and haecceity — is
+Apache-2.0. `NOTICE` says what came from where.

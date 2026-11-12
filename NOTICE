@@ -1,0 +1,21 @@
+ExMontyCad: a graph memory for Monty, built from a STEP part.
+
+Copyright (c) Dmitry Ledentsov and contributors.
+
+This Source Code Form is subject to the terms of the Mozilla Public License, v.
+2.0. If a copy of the MPL was not distributed with this file, You can obtain one
+at https://mozilla.org/MPL/2.0/.
+
+It builds on work by others, whose licences it keeps:
+
+  * ExTbpMonty.Core — the Thousand Brains Project's sensorimotor framework, ported
+    to the BEAM (https://github.com/d-led/ex.tbp.monty), which is the project's
+    own reimplementation of Monty (MIT, Copyright (c) Thousand Brains Project).
+    This package calls its percept rather than re-implementing one.
+  * ExQuiddity — quiddity and the exact B-rep under it, bound for the BEAM
+    (https://github.com/d-led/ex.quiddity), MPL-2.0 for the binding and Apache
+    License 2.0 for the engine (https://github.com/pzfreo/quiddity). Used as a
+    dependency; not modified here.
+
+The STEP test fixture under `test/fixtures/` came from quiddity's own test suite,
+which takes it from public sources; each file names its source beside it.

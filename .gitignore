@@ -1,0 +1,126 @@
+# Created by https://www.toptal.com/developers/gitignore/api/elixir,macos,linux,windows,visualstudiocode
+# Edit at https://www.toptal.com/developers/gitignore?templates=elixir,macos,linux,windows,visualstudiocode
+
+### Elixir ###
+/_build/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+*.beam
+/config/*.secret.exs
+.elixir_ls/
+
+### Elixir Patch ###
+# ElixirLS
+.elixir_ls/
+LS-*.log
+
+# for current versions of ElixirLS
+/elixir_ls/
+
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+
+# Network Trash Folder
+Temporary Items
+.apdisk
+
+### Linux ###
+*~
+
+# temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# .nfs files are created when an .nfs file is removed but is still being accessed
+.nfs*
+
+### Windows ###
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
+
+# End of https://www.toptal.com/developers/gitignore/api/elixir,macos,linux,windows,visualstudiocode
+
+### ex_monty_cad ###
+# A library written by a training run: generated, and large.
+/priv/trained/
+# Where a test that names a temporary directory writes.
+/tmp/
+# A package built by `mix hex.build`.
+/ex_monty_cad-*.tar
+# The log of a CI run watched from here.
+/.ci/
+# TEMPORARY: ex_quiddity 0.1.0 is staged on Hex awaiting approval, so no lock can
+# hold its hash yet. The lock is committed as soon as the release is live; this
+# line goes with it.
+/mix.lock
