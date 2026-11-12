@@ -76,6 +76,16 @@ The description is `MontyCad.Plugin`'s contract — kinds, placements, needs —
 use. A cluster asks over the protocol; this package asks the same question in a
 test.
 
+## Checking them
+
+    mix monty_cad.plugin.check
+
+Every module of your application that describes itself as a plugin, checked
+against the contract: the description conforms, and the callbacks its kind
+requires are exported. Run it in CI — the compiler refuses a missing callback, but
+a description is a map, and a map drifts in silence until a run asks for the
+plugin and fails somewhere else.
+
 ## Install
 
 ```elixir

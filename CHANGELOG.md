@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **`MontyCad.Plugin.Check`** and **`mix monty_cad.plugin.check`** — every module of
+  an application that describes itself as a plugin, checked against the contract:
+  the description conforms, and the callbacks its kind requires are exported. The
+  compiler already refuses a missing callback; a description is a map, and a map
+  drifts silently.
+
 ## 0.2.0
 
 Code generators, and the contract they generate against.
