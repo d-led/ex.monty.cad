@@ -123,4 +123,3 @@ $RECYCLE.BIN/
 # TEMPORARY: ex_quiddity 0.1.0 is staged on Hex awaiting approval, so no lock can
 # hold its hash yet. The lock is committed as soon as the release is live; this
 # line goes with it.
-/mix.lock

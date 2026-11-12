@@ -1,10 +1,10 @@
-# A graph memory for a run, from a drawing.
+# ex_monty_cad
 
-# Monty learns an object by sensing it, and its pretrained memories come from
-# episodes. A CAD part has already been explored: its surface is exact, and the
-# recognition names every face, so a node's label is a fact rather than a
-# conclusion. This package is the join between the two — the part on one side,
-# Monty's own percept and its library format on the other.
+Monty learns an object by sensing it, and its pretrained memories come from
+episodes. A CAD part has already been explored: its surface is exact, and the
+recognition names every face, so a node's label is a fact rather than a
+conclusion. This package is the join between the two — the part on one side,
+Monty's own percept and its library format on the other.
 
 ```elixir
 {:ok, part} = Quiddity.open("bracket.step")
