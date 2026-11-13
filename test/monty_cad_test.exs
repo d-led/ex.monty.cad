@@ -233,6 +233,73 @@ defmodule MontyCadTest do
     end
   end
 
+  describe "a memory of several parts" do
+    test "samples a part by its own size, with a floor at what the detail needs", %{part: part} do
+      # The fixture is 60 mm across, and thirty visits across 60 mm is the 2 mm
+      # a single part has always been written with: the rule and the old dial
+      # agree there, which is why every single-part measurement still stands.
+      assert Training.spacing(part) == 2.0
+
+      # Smaller still is sampled no finer: a floor, because a small part's
+      # detail does not need more visits and every visit is a fitted patch.
+      assert Training.spacing(with_extent(part, 40.0)) == 2.0
+
+      # Five times the size is five times the spacing, so the memory holds about
+      # as many nodes as the small one's — two parts are comparable, rather than
+      # one of them being the denser graph.
+      assert Training.spacing(with_extent(part, 300.0)) == 10.0
+    end
+
+    @tag :tmp_dir
+    test "writes one record per part into the one file a run loads", %{tmp_dir: dir} do
+      path = Path.join(dir, "memory.jsonl.gz")
+
+      assert {:ok, written} =
+               Training.write_library(
+                 [{"plate", @fixture}, {"plate_again", @fixture}],
+                 path,
+                 spacing: 14.0,
+                 limit: 12
+               )
+
+      assert written.path == path
+      assert Enum.map(written.objects, & &1.object_id) == ["plate", "plate_again"]
+      assert written.nodes == written.objects |> Enum.map(& &1.nodes) |> Enum.sum()
+
+      # A forced spacing is what every part gets, which is how a memory written
+      # before the rule can be reproduced.
+      assert Enum.all?(written.objects, &(&1.spacing == 14.0))
+
+      records =
+        path
+        |> File.read!()
+        |> :zlib.gunzip()
+        |> String.split("\n", trim: true)
+        |> Enum.map(&Jason.decode!/1)
+
+      assert Enum.map(records, & &1["object_id"]) == ["plate", "plate_again"]
+      assert Enum.all?(records, &(&1["input_channel"] == "patch"))
+    end
+
+    @tag :tmp_dir
+    test "each part is sampled by the rule when no spacing is named", %{tmp_dir: dir} do
+      path = Path.join(dir, "memory.jsonl.gz")
+
+      assert {:ok, written} = Training.write_library([{"plate", @fixture}], path, limit: 60)
+
+      assert [%{object_id: "plate", spacing: 2.0}] = written.objects
+    end
+
+    test "a part that cannot be opened is an error, not a shorter memory" do
+      assert {:error, %Quiddity.Error{}} =
+               Training.write_library([{"missing", "/nope/missing.step"}], "/tmp/never.jsonl.gz")
+    end
+  end
+
+  defp with_extent(part, largest) do
+    %{part | summary: Map.put(part.summary, "extent", [largest, largest / 1.2, largest / 3])}
+  end
+
   defp distance([ax, ay, az], [bx, by, bz]) do
     :math.sqrt((ax - bx) ** 2 + (ay - by) ** 2 + (az - bz) ** 2)
   end

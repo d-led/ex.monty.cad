@@ -90,7 +90,20 @@ defmodule MontyCad.Library do
   """
   @spec write(t(), Path.t(), keyword()) :: :ok | {:error, Quiddity.Error.t()}
   def write(%__MODULE__{} = library, path, options \\ []) do
-    body = library |> records(options) |> Enum.map_join("\n", &Jason.encode!/1)
+    write_records(records(library, options), path)
+  end
+
+  @doc """
+  Writes several records as the one gzipped file of JSON lines a run loads.
+
+  A memory is one line per object (`LM`'s own pretrained files are ten lines for
+  ten objects), so a memory of several parts is this: each part's record, in one
+  file. Writing them together rather than one file per part is what makes the
+  run's answer a choice between them.
+  """
+  @spec write_records([map()], Path.t()) :: :ok | {:error, Quiddity.Error.t()}
+  def write_records([_ | _] = records, path) do
+    body = Enum.map_join(records, "\n", &Jason.encode!/1)
 
     with :ok <- File.mkdir_p(Path.dirname(path)) do
       case File.write(path, :zlib.gzip(body <> "\n")) do

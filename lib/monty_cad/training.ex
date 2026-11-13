@@ -51,6 +51,10 @@ defmodule MontyCad.Training do
   # closer stand reads a smaller patch, so fewer visits straddle a face's edge
   # and are skipped for it.
   @default_distance 5.0
+  # How many visits a part gets across its largest extent: the dial that makes
+  # two parts of different sizes comparable, and the same idea as the framework's
+  # own `num_model_voxels_per_dim` (`spacing/1`).
+  @samples_across 30
 
   @typedoc """
   One node: where the sensor was, what it perceived, and what quiddity says it
@@ -155,6 +159,105 @@ defmodule MontyCad.Training do
          families: visits.families,
          features: Library.feature_names(library),
          source_sha256: part.summary["sha256"]
+       }}
+    end
+  end
+
+  @doc """
+  The spacing a part is sampled at, in the part's own millimetres.
+
+  Never finer than `#{@default_spacing}`, and never more than #{@samples_across}
+  visits across the part's largest extent — so a 60 mm part is 2 mm either way
+  and a 300 mm part is 10 mm. The floor keeps a small part from being sampled
+  beyond what its detail needs; the ceiling is what makes a memory of *several*
+  parts comparable, because the memory is compared across its parts.
+
+  A fixed number of millimetres is right for one part and wrong for a library.
+  With a fixed 2 mm the same number of nodes covers twenty-five times the area
+  on a part five times the size, so the library is a library of two densities —
+  and the denser graph wins the candidate search, which is a radius, not a
+  shape. Measured: a library of a plate and its 5× twin concluded the *small*
+  plate at evidence 15.5, and the same pair at 1.5× concluded it at 12.0
+  (`docs/cad.md` in the studio). Sampled at `spacing/1` instead, the sensed part
+  is the one on top in every seed tried, at evidence up to 39.8.
+
+  The framework has the same idea for the same reason: a graph memory is
+  voxelised over `num_model_voxels_per_dim` of `max_graph_size`, a resolution
+  relative to the graph rather than a number of metres.
+  """
+  @spec spacing(Part.t()) :: float()
+  def spacing(%Part{} = part) do
+    case Map.get(part.summary, "extent") do
+      [_ | _] = extent -> max(@default_spacing, Enum.max(extent) / @samples_across)
+      _no_extent -> @default_spacing
+    end
+  end
+
+  @doc """
+  A memory of several parts, written as the one file a run loads.
+
+  `parts` is `[{object_id, path}]`, in the order they should appear in the file,
+  and each is sampled at `spacing/1` — never at one number of millimetres for
+  all of them, which is what `spacing/1` is about.
+
+  Options are `nodes/2`'s and are passed to every part, except:
+
+    * `:spacing` — forced for every part, for reproducing a memory written
+      before the rule above existed;
+    * `:limit`, `:distance`, `:min_coverage`, `:units` — as `nodes/2` reads them.
+
+  Answers the path, each part's contribution, and the total node count. A part
+  that cannot be opened or sampled is an error, not a file missing that part: a
+  memory that quietly holds four of five parts answers a question nobody asked.
+  """
+  @spec write_library([{String.t(), Path.t()}], Path.t(), keyword()) ::
+          {:ok, map()} | {:error, Quiddity.Error.t()}
+  def write_library([_ | _] = parts, path, options \\ []) do
+    with {:ok, written} <- write_parts(parts, options),
+         :ok <- Library.write_records(Enum.flat_map(written, & &1.records), path) do
+      {:ok,
+       %{
+         path: path,
+         nodes: written |> Enum.map(& &1.nodes) |> Enum.sum(),
+         objects: Enum.map(written, &Map.delete(&1, :records))
+       }}
+    end
+  end
+
+  defp write_parts(parts, options) do
+    parts
+    |> Enum.reduce_while({:ok, []}, fn {object_id, part_path}, {:ok, written} ->
+      case write_part(object_id, part_path, options) do
+        {:ok, part} -> {:cont, {:ok, [part | written]}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, written} -> {:ok, Enum.reverse(written)}
+      error -> error
+    end
+  end
+
+  defp write_part(object_id, part_path, options) do
+    with {:ok, part} <- Quiddity.open(part_path),
+         {:ok, recognition} <- Quiddity.features(part),
+         spacing <- Keyword.get(options, :spacing) || spacing(part),
+         part_options =
+           options
+           |> Keyword.put(:recognition, recognition)
+           |> Keyword.put(:spacing, spacing),
+         {:ok, %{nodes: nodes} = visits} <- nodes(part, part_options),
+         {:ok, library} <- library(nodes, object_id, options) do
+      {:ok,
+       %{
+         object_id: object_id,
+         nodes: Library.size(library),
+         spacing: spacing,
+         visited: visits.visited,
+         skipped: visits.skipped,
+         truncated: visits.truncated,
+         families: visits.families,
+         records: Library.records(library)
        }}
     end
   end
