@@ -31,12 +31,12 @@ defmodule MontyCad.Gen.Policy do
       wrong node.
       \"\"\"
 
-      @behaviour MontyCad.Plugin
+      @behaviour MontyPlugin
       @behaviour Monty.Frameworks.Models.MotorPolicies.MotorPolicy
 
       defstruct sensor_id: "sensor_0"
 
-      @impl MontyCad.Plugin
+      @impl MontyPlugin
       def describe do
         %{
           "name" => "#{name(module)}",
@@ -88,7 +88,7 @@ defmodule MontyCad.Gen.Policy do
       alias #{inspect(module)}
 
       test "describes itself the way a cluster asks" do
-        assert :ok = MontyCad.Plugin.conforms?(#{alias_name(module)}.describe())
+        assert :ok = MontyPlugin.conforms?(#{alias_name(module)}.describe())
       end
 
       test "is a motor policy, and one that has to run where its part is" do

@@ -3,7 +3,7 @@ defmodule Mix.Tasks.MontyCad.Plugin.Check do
 
   @moduledoc """
   Every module of this application that describes itself as a plugin, checked
-  against `MontyCad.Plugin`: the description conforms, and the callbacks its kind
+  against `MontyPlugin`: the description conforms, and the callbacks its kind
   requires are exported.
 
       mix monty_cad.plugin.check

@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+### Changed — breaking
+
+- **The plugin contract is `MontyPlugin`, from `ex_monty_plugin`.**
+  `MontyCad.Plugin` is gone: a description is one map, and two definitions of what
+  belongs in it are two answers to one question — one asked of a policy written
+  here and one asked of a policy written somewhere else. A module that said
+  `@behaviour MontyCad.Plugin` now says `@behaviour MontyPlugin` (add the package
+  as a dependency), and `MontyCad.Plugin.conforms?/1` is
+  `MontyPlugin.conforms?/1`. `mix monty_cad.gen.policy` emits the new name, so a
+  freshly generated plugin needs no edit.
+- **`MontyCad.Plugin.Check` with it** — `problems/1` and `plugins/1` read the
+  shared contract, so a plugin of another package is checked the same way. The
+  callbacks a kind requires stay here: that is knowledge of Monty's behaviours, not
+  of the contract.
+
 ### Added
 
 - **`MontyCad.Plugin.Check`** and **`mix monty_cad.plugin.check`** — every module of

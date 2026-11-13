@@ -36,6 +36,14 @@ defmodule MontyCad.MixProject do
       # being written is a graph of something else.
       {:ex_tbp_monty_core, "~> 0.1.2"},
 
+      # The plugin contract and its registry. A plugin's description is one map,
+      # and two definitions of what belongs in it are two answers to one question;
+      # this package's own copy is gone, so a generated policy declares
+      # `@behaviour MontyPlugin`. It is a git dependency until the package is on
+      # Hex, which is also why the release job refuses to publish a package with a
+      # git dependency in it.
+      {:ex_monty_plugin, github: "d-led/ex_monty_plugin"},
+
       # The geometry: a part parsed once, ray cast exactly against the B-rep, so
       # a frame's points are on the surface rather than near it.
       {:ex_quiddity, "~> 0.1"},

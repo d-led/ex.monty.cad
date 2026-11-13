@@ -52,6 +52,17 @@ jobs:
             echo "VERSION says $version and the tag says $tag — one of them is wrong" >&2
             exit 1
           fi
+
+      # Hex refuses a package that depends on a git repository, and it refuses it
+      # after the suite has run. A dependency that has not been published yet is a
+      # sentence worth having before the build, and one that names the repository.
+      - name: Nothing this package depends on is unpublished
+        run: |
+          if grep -qE '\{:[a-z_]+, (github|git):' mix.exs; then
+            echo "::error::Hex cannot publish a package with a git dependency — publish it to Hex first:" >&2
+            grep -nE '\{:[a-z_]+, (github|git):' mix.exs >&2
+            exit 1
+          fi
       - run: mix hex.build
       - name: Publish to Hex
         env:

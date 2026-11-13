@@ -9,11 +9,11 @@ defmodule MontyCad.Test.Fixtures do
 
   defmodule GoodPolicy do
     @moduledoc "A motor policy that is everything it claims."
-    @behaviour MontyCad.Plugin
+    @behaviour MontyPlugin
 
     defstruct sensor_id: "sensor_0"
 
-    @impl MontyCad.Plugin
+    @impl MontyPlugin
     def describe do
       %{
         "name" => "good_policy",
@@ -34,11 +34,11 @@ defmodule MontyCad.Test.Fixtures do
     A motor policy whose description says so, and which cannot be called: the
     callback a run needs first is the one it does not export.
     """
-    @behaviour MontyCad.Plugin
+    @behaviour MontyPlugin
 
     defstruct sensor_id: "sensor_0"
 
-    @impl MontyCad.Plugin
+    @impl MontyPlugin
     def describe do
       %{
         "name" => "partial_policy",
@@ -55,9 +55,9 @@ defmodule MontyCad.Test.Fixtures do
 
   defmodule Unnamed do
     @moduledoc "A plugin whose description forgot the one field a cluster registers."
-    @behaviour MontyCad.Plugin
+    @behaviour MontyPlugin
 
-    @impl MontyCad.Plugin
+    @impl MontyPlugin
     def describe do
       %{"kind" => :experiment, "version" => "0.1.0", "placement" => :anywhere, "needs" => []}
     end

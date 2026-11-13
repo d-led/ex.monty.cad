@@ -76,8 +76,8 @@ generated body that looks like an answer is a decision nobody made. The policy i
 `:owner_only` (it reads a B-rep, and a B-rep handle cannot leave its node); change
 that in `describe/0` if yours does not, and the test will follow the description.
 
-The description is `MontyCad.Plugin`'s contract — kinds, placements, needs — and
-`MontyCad.Plugin.conforms?/1` says what is wrong with one that a cluster cannot
+The description is `MontyPlugin`'s contract — kinds, placements, needs — and
+`MontyPlugin.conforms?/1` says what is wrong with one that a cluster cannot
 use. A cluster asks over the protocol; this package asks the same question in a
 test.
 

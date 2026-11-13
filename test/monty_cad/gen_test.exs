@@ -23,7 +23,7 @@ defmodule MontyCad.GenTest do
 
   describe "a generated policy" do
     test "describes itself the way a cluster asks", %{policy: policy} do
-      assert :ok = MontyCad.Plugin.conforms?(policy.describe())
+      assert :ok = MontyPlugin.conforms?(policy.describe())
     end
 
     test "is a motor policy that has to run where its part is", %{policy: policy} do

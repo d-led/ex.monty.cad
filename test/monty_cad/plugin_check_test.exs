@@ -30,7 +30,7 @@ defmodule MontyCad.PluginCheckTest do
     assert GoodPolicy in plugins
     assert PartialPolicy in plugins
     assert Unnamed in plugins
-    refute Enum.any?(plugins, &(&1 == MontyCad.Plugin))
+    refute Enum.any?(plugins, &(&1 == MontyPlugin))
   end
 
   test "an application with no plugins has none" do

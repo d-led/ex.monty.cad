@@ -8,6 +8,11 @@ defmodule MontyCad.Plugin.Check do
   drifted, because a description is a map. So that is what is checked here, plus
   the callbacks of the kinds whose behaviour this package can name — one list, so
   a test can hold it and CI can fail on it.
+
+  The description half is `MontyPlugin.conforms?/1`: the contract is the package's
+  (`ex_monty_plugin`), because a cluster asks it of a policy written here and one
+  written somewhere else, and two definitions of what belongs in a description are
+  two answers to one question.
   """
 
   @doc """
@@ -36,7 +41,7 @@ defmodule MontyCad.Plugin.Check do
 
   defp description_problems(module) do
     if function_exported?(module, :describe, 0) do
-      case MontyCad.Plugin.conforms?(module.describe()) do
+      case MontyPlugin.conforms?(module.describe()) do
         :ok -> []
         {:error, reason} -> ["#{inspect(module)} describes itself wrongly: #{reason}"]
       end
@@ -83,7 +88,7 @@ defmodule MontyCad.Plugin.Check do
 
   defp plugin?(module) do
     case Code.ensure_loaded(module) do
-      {:module, _} -> MontyCad.Plugin in (module.module_info(:attributes)[:behaviour] || [])
+      {:module, _} -> MontyPlugin in (module.module_info(:attributes)[:behaviour] || [])
       _ -> false
     end
   end
