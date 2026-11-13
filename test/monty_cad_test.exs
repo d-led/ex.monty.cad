@@ -69,8 +69,22 @@ defmodule MontyCadTest do
 
       assert features["on_object"] == 1.0
       assert features["object_coverage"] == 1.0
-      assert [normal | _rest] = features["pose_vectors"]
+      # Nine numbers, flat, in the order Monty's own export writes them
+      # (`n0,n1,n2, c0,c1,c2, k0,k1,k2`): a graph column holds numbers, and the
+      # framework's reader chunks one by three to get the three vectors. Nested
+      # rows here made every value a level deeper than the reader assumed, and a
+      # run died in burst sampling with `[[matrix]]`.
+      assert [n0, n1, n2, c0, c1, c2, k0, k1, k2] = features["pose_vectors"]
+      assert_in_delta 1.0, length_of([n0, n1, n2]), 1.0e-9
+      assert_in_delta 1.0, length_of([c0, c1, c2]), 1.0e-9
+      assert_in_delta 1.0, length_of([k0, k1, k2]), 1.0e-9
+
+      assert [normal, curvature_1, curvature_2] =
+               Enum.chunk_every(features["pose_vectors"], 3)
+
       assert_in_delta 1.0, length_of(normal), 1.0e-9
+      assert_in_delta 1.0, length_of(curvature_1), 1.0e-9
+      assert_in_delta 1.0, length_of(curvature_2), 1.0e-9
       # A flat patch reads flat.
       assert_in_delta 0.0, features["principal_curvatures_log"] |> Enum.at(0), 0.1
       assert is_integer(message.semantic_id) or is_nil(message.semantic_id)
@@ -207,13 +221,15 @@ defmodule MontyCadTest do
       assert Enum.all?(positions, &(length(&1) == 3))
       assert Enum.all?(features, fn {_name, column} -> length(column) == length(positions) end)
 
-      # The names a memory matches on are present, and each node's pose is
-      # three rows of three.
+      # The names a memory matches on are present, and each node's pose is nine
+      # numbers — the flat form Monty's own export writes, and the one the
+      # framework's reader chunks by three to get the three vectors.
       for name <- ["pose_vectors", "pose_fully_defined", "principal_curvatures_log"] do
         assert Map.has_key?(features, name)
       end
 
-      assert Enum.all?(features["pose_vectors"], fn rows -> length(rows) == 3 end)
+      assert Enum.all?(features["pose_vectors"], &(length(&1) == 9))
+      assert Enum.all?(features["pose_vectors"], &(length(Enum.chunk_every(&1, 3)) == 3))
     end
   end
 

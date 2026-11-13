@@ -122,9 +122,14 @@ defmodule MontyCad.Percept do
     Map.merge(message.morphological_features || %{}, message.non_morphological_features || %{})
   end
 
-  # A pose vector is a struct in the framework's vocabulary; a graph stores numbers, so
-  # the rows it holds are what travels.
-  defp flatten(%Monty.Geometry.SurfacePoseVectors{value: rows}), do: Enum.map(rows, &flatten/1)
+  # A pose vector is a struct in the framework's vocabulary; a graph stores
+  # numbers, and the nine of them travel flat — `n0, n1, n2, c0, c1, c2, k0, k1,
+  # k2`, which is the shape Monty's own export writes and the shape the reader
+  # assumes: `GraphMemory.get_rotation_features_at_nodes/4` chunks a value by
+  # three to get the three vectors. Keeping the rows nested put every value one
+  # level deeper than that, and a run died in burst sampling aligning a matrix
+  # against `[[matrix]]`.
+  defp flatten(%Monty.Geometry.SurfacePoseVectors{value: rows}), do: List.flatten(rows)
 
   defp flatten(values) when is_list(values), do: Enum.map(values, &flatten/1)
   defp flatten(value), do: value
