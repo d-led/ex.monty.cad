@@ -42,6 +42,10 @@ jobs:
       - run: mix format --check-formatted
       - run: mix compile --warnings-as-errors
       - run: mix credo --strict
+      # A version edited in `mix.exs` and not in `VERSION` survives until the tag,
+      # and then the tag is refused — so the disagreement is caught on the push that
+      # made it.
+      - run: elixir scripts/release.exs check
       - run: mix docs
         env:
           MIX_ENV: dev
