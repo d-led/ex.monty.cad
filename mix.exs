@@ -30,7 +30,7 @@ defmodule MontyCad.MixProject do
 
   defp deps do
     [
-      # The percept has to be Monty's own: `ObservationProcessor` fits the
+      # The percept has to be the framework's own: `ObservationProcessor` fits the
       # surface, finds the curvatures and assembles the message. A node trained
       # from a CAD part must be the percept a run would have made, or the graph
       # being written is a graph of something else.
@@ -57,8 +57,8 @@ defmodule MontyCad.MixProject do
   end
 
   defp description do
-    "A graph memory for Monty, built from a STEP part: sample the exact B-rep, " <>
-      "take Monty's own percept at each visit, and write the labelled library a " <>
+    "A graph memory for the Elixir Monty Studio, built from a STEP part: sample the exact B-rep, " <>
+      "take the framework's own percept at each visit, and write the labelled library a " <>
       "run loads."
   end
 

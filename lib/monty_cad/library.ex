@@ -1,8 +1,8 @@
 defmodule MontyCad.Library do
   @moduledoc """
-  A graph memory in the form a Monty run loads.
+  A graph memory in the form a run loads.
 
-  Monty's pretrained memory is one file of JSON lines, gzipped, one record per
+  the framework's pretrained memory is one file of JSON lines, gzipped, one record per
   object and input channel:
 
       {"object_id": "bracket", "input_channel": "patch",

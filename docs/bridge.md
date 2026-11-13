@@ -8,7 +8,7 @@ It is a package of its own because it depends on things the geometry does not:
 what it was — a STEP part and the exact geometry under it — and knows nothing
 about any of this.
 
-## The percept is Monty's own
+## The percept is the framework's own
 
 The temptation is to compute "features" from the B-rep directly: the surface
 normal is a property of the surface, the principal curvatures have closed forms
@@ -20,11 +20,11 @@ So a percept here is produced the way a run produces one:
 
 1. `Quiddity.frame/2` renders a camera frame against the exact B-rep: per pixel a
    point, an outward normal, a face and a depth.
-2. `MontyCad.Percept.observation/2` lays it out as Monty's sensor modules read it
+2. `MontyCad.Percept.observation/2` lays it out as the framework's sensor modules read it
    — `"semantic_3d"` (one row per pixel, `[x, y, z, semantic_id]`), `"rgba"`,
    `"depth"`, `"semantic"` and `"cam_to_world"`.
 3. `Monty.Frameworks.Models.SensorModules.ObservationProcessor.process/2` — the
-   ported Monty module, not a copy — fits the surface, finds the principal
+   ported module, not a copy — fits the surface, finds the principal
    curvatures and assembles the message.
 
 What a test holds: on a flat face the fitted principal curvatures are zero, the
@@ -35,7 +35,7 @@ pose vector's first row is the surface normal in the sensor's own frame, and
 
 - **A pose vector is in the sensor's frame.** A patch reading a surface straight
   on reports a normal of `[0, 0, -1]`, because a camera looks along its own −z.
-  This is Monty's convention, and it is the one a graph stores.
+  This is the framework's convention, and it is the one a graph stores.
 - **`on_object` is read from the fourth column of `semantic_3d`.** A CAD frame
   puts the object's semantic id there (`1`) for a pixel that met the part and
   `0.0` for background, which is what the processor reads.

@@ -1,8 +1,8 @@
 defmodule Mix.Tasks.MontyCad.Train do
-  @shortdoc "Writes the graph memory a Monty run loads, from a STEP part"
+  @shortdoc "Writes the graph memory a run loads, from a STEP part"
 
   @moduledoc """
-  Samples a part's surface, takes Monty's percept at each visit, and writes the
+  Samples a part's surface, takes the framework's percept at each visit, and writes the
   library.
 
       mix monty_cad.train bracket.step --object bracket --out bracket.jsonl.gz

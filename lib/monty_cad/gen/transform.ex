@@ -39,7 +39,7 @@ defmodule MontyCad.Gen.Transform do
         raise \"\"\"
         #{name(module)} has not done anything with the payload yet.
 
-        Answer `{payload, transform}`. Monty's own transforms — the patch finder, the
+        Answer `{payload, transform}`. the framework's own transforms — the patch finder, the
         surface normaliser — are in `tbp/monty/frameworks/models/sensor_modules/` for
         the shape, and `Monty.SensorModules.SensorModule` shows how a pipeline of them
         is stepped.
@@ -60,7 +60,7 @@ defmodule MontyCad.Gen.Transform do
       promise the pipeline relies on — an answer for every input, a payload and the
       transform that made it.
 
-      The behaviour itself is the case to translate next, from Monty's own
+      The behaviour itself is the case to translate next, from the framework's own
       `tests/`; a hand-written one states intent.
       \"\"\"
 

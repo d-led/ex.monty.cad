@@ -2,7 +2,7 @@ defmodule MontyCad.Training do
   @moduledoc """
   A graph memory built from a CAD part — supervised training without an episode.
 
-  Monty learns an object by touching it: a surface agent explores, and every
+  The framework learns an object by touching it: a surface agent explores, and every
   patch it lands on becomes a node with the percept it made there. A CAD part
   already *is* the explored object — its surface is known exactly — so the
   exploration can be replaced by sampling: put a patch sensor on the surface,
@@ -17,14 +17,14 @@ defmodule MontyCad.Training do
 
   ## What this is not
 
-  It is not a replacement for a training episode's *action* policy. Monty's
+  It is not a replacement for a training episode's *action* policy. the framework's
   episodes also learn where to look next, and a CAD-built memory does not hold
   that. What it holds is the part, densely and evenly, which is the thing an
   episode spends its first minutes doing badly.
 
   ## Cost
 
-  One patch is one frame — 4 096 rays — and a percept is Monty's own feature
+  One patch is one frame — 4 096 rays — and a percept is the framework's own feature
   extraction on top. A plate at 2 mm spacing is a few hundred patches; a large
   part at 0.5 mm is thousands, so `:limit` caps the work and `:spacing` is the
   honest dial.
@@ -35,7 +35,7 @@ defmodule MontyCad.Training do
 
   @default_spacing 2.0
   @default_limit 2_000
-  # A Monty patch sensor stands a centimetre or two off the surface it reads. A
+  # A patch sensor stands a centimetre or two off the surface it reads. A
   # closer stand reads a smaller patch, so fewer visits straddle a face's edge
   # and are skipped for it.
   @default_distance 5.0
@@ -62,7 +62,7 @@ defmodule MontyCad.Training do
       which keeps a patch's footprint smaller than a face on most parts);
     * `:min_coverage` — the share of a patch that must land on the part for the
       visit to count (default 0.6);
-    * `:features` — the sensor's feature list, defaulting to a Monty patch's;
+    * `:features` — the sensor's feature list, defaulting to a patch's;
     * `:progress` — a one-argument function called after each percept, for a
       caller that wants to show a count rather than wait.
 

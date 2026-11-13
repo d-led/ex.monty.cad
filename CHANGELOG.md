@@ -14,7 +14,7 @@
   freshly generated plugin needs no edit.
 - **`MontyCad.Plugin.Check` with it** — `problems/1` and `plugins/1` read the
   shared contract, so a plugin of another package is checked the same way. The
-  callbacks a kind requires stay here: that is knowledge of Monty's behaviours, not
+  callbacks a kind requires stay here: that is knowledge of the framework's behaviours, not
   of the contract.
 
 ### Added
@@ -47,19 +47,19 @@ Code generators, and the contract they generate against.
 
 ## 0.1.0
 
-The first release: a Monty graph memory built from a STEP part.
+The first release: an Elixir Monty Studio graph memory built from a STEP part.
 
 ### Added
 
 - **The percept.** `MontyCad.Percept` turns a `Quiddity.Frame` into the
-  observation Monty's sensor modules read (`semantic_3d`, shaded `rgba`,
-  `cam_to_world`) and calls Monty's own `ObservationProcessor` for the message:
+  observation the framework's sensor modules read (`semantic_3d`, shaded `rgba`,
+  `cam_to_world`) and calls the framework's own `ObservationProcessor` for the message:
   pose vectors, whether the pose is defined, principal curvatures, `on_object`,
   `object_coverage`.
 - **Training from CAD.** `MontyCad.Training` samples the part's surface at a
   chosen spacing, takes a percept at each visit and answers the visits, with the
   face and the feature family quiddity's recognition gives for each.
-- **The library.** `MontyCad.Library` writes the graph memory a Monty run loads —
+- **The library.** `MontyCad.Library` writes the graph memory a run loads —
   gzipped JSON lines, one record per node — and `MontyCad.Training.write/4` does
   all three steps in one call.
 - **A task.** `mix monty_cad.train` is the same job from a shell, and prints the

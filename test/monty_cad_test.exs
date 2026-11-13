@@ -1,6 +1,6 @@
 defmodule MontyCadTest do
   @moduledoc """
-  The bridge to Monty: the observations a frame becomes, the percept Monty's own
+  The bridge to the framework: the observations a frame becomes, the percept the framework's own
   processor fits, and the graph memory a run loads.
 
   The library format is the contract that matters — `Monty.Studio.Memory` reads it
@@ -45,7 +45,7 @@ defmodule MontyCadTest do
       assert bottom == [0.0, 0.0, 0.0, 1.0]
     end
 
-    test "a background pixel carries Monty's background, not a face number", %{part: part} do
+    test "a background pixel carries the framework's background, not a face number", %{part: part} do
       {:ok, camera} = Camera.looking_at([0.0, 0.0, 200.0], [0.0, 0.0, 400.0])
       {:ok, frame} = Quiddity.frame(part, camera)
 
@@ -54,7 +54,9 @@ defmodule MontyCadTest do
   end
 
   describe "the percept" do
-    test "is Monty's own processor's answer, and it is a node's worth of features", %{part: part} do
+    test "is the framework's own processor's answer, and it is a node's worth of features", %{
+      part: part
+    } do
       {:ok, frame} = patch(part)
       {:ok, message} = Percept.message(frame)
       features = Percept.node_features(message)
@@ -189,7 +191,7 @@ defmodule MontyCadTest do
       assert Enum.all?(positions, &(length(&1) == 3))
       assert Enum.all?(features, fn {_name, column} -> length(column) == length(positions) end)
 
-      # The names a Monty memory matches on are present, and each node's pose is
+      # The names a memory matches on are present, and each node's pose is
       # three rows of three.
       for name <- ["pose_vectors", "pose_fully_defined", "principal_curvatures_log"] do
         assert Map.has_key?(features, name)

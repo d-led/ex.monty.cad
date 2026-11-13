@@ -54,9 +54,9 @@ defmodule MontyCad.Gen.Policy do
 
         A policy answers `{MotorPolicyResult.t(), t()}`: the actions to take, whether
         learning modules sit this step out, and the policy as it now stands. Write the
-        decision here — Monty's own policies are in
+        decision here — the framework's own policies are in
         `tbp/monty/frameworks/models/motor_policies.py` for the shape of an answer — and
-        translate the case from Monty's `tests/` rather than inventing one.
+        translate the case from the framework's `tests/` rather than inventing one.
         \"\"\"
       end
 
@@ -79,7 +79,7 @@ defmodule MontyCad.Gen.Policy do
       what it is, and it is the kind of plugin it claims to be.
 
       The decision itself is the case to translate next. A hand-written one states
-      intent; a case copied from Monty's own `tests/` is evidence, and that is
+      intent; a case copied from the framework's own `tests/` is evidence, and that is
       what a policy that claims parity has to have.
       \"\"\"
 
