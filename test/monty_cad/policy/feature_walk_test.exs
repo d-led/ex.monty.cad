@@ -53,7 +53,9 @@ defmodule MontyCad.Policy.FeatureWalkTest do
     policy = FeatureWalk.new(part: part, recognition: recognition)
     {policy, _world, _decisions} = walk(part, policy, scene, 400)
 
-    assert policy.visited == MapSet.new(["bosses/0", "holes/0"])
+    # Newest first, because a visit is prepended; the case is about having been
+    # to every feature, not about the order they were taken in.
+    assert Enum.sort(policy.visited) == ["bosses/0", "holes/0"]
     assert policy.target == nil
     assert policy.walked > 0
   end
@@ -91,11 +93,11 @@ defmodule MontyCad.Policy.FeatureWalkTest do
 
   test "a fresh episode forgets where it has been", %{part: part, recognition: recognition} do
     policy = FeatureWalk.new(part: part, recognition: recognition)
-    visited = %{policy | visited: MapSet.new(["bosses/0"]), target: %{id: "bosses/0"}, walked: 12}
+    visited = %{policy | visited: ["bosses/0"], target: %{id: "bosses/0"}, walked: 12}
 
     fresh = FeatureWalk.reset(visited)
 
-    assert fresh.visited == MapSet.new()
+    assert fresh.visited == []
     assert fresh.target == nil
     assert fresh.walked == 0
     assert FeatureWalk.state_dict(fresh).visited == []

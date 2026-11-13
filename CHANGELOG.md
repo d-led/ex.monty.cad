@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.6.0
+
+### Changed
+
+- **`Policy.FeatureWalk`'s `visited` is a list of feature ids, not a `MapSet`.**
+  The walk is a policy's value and it is handed to whoever keeps it; a `MapSet`
+  in it made an empty walk a term no caller outside this package could pass to a
+  function typed against the walk's own contract (`mix dialyzer`'s
+  `call_without_opaque`). `state_dict/1` answers the same map it did.
+
+## 0.5.0
+
+- **`Policy.FeatureWalk`** — the walk from feature to feature over a part:
+  keep the standoff, then take one step towards the feature the recognition
+  names, then the next.
+- **`Inputs`** — a part is a name in `$MONTY_DATA/parts` (the `.step`/`.stp`
+  extension optional), and a memory's address is
+  `$MONTY_LIBRARIES/<release>/<name>.jsonl.gz`.
+- **`Percept`'s `:units`** — millimetres by default, which is what a part is
+  measured in, and metres for a library a run loads.
+- **`Library.records/1`** writes every feature column as a list, which is the
+  shape the framework's graph memory reads.
+
+## 0.4.0
+
+- **`Scene`** — a part as the scene a world steps: what a sensor sees, the pose
+  to start one in, the primary target, and the semantic ids as labels.
+
 ## 0.3.0
 
 ### Changed — breaking

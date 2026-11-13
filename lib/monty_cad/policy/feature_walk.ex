@@ -63,7 +63,7 @@ defmodule MontyCad.Policy.FeatureWalk do
     agent_id: "agent_id_0",
     sensor_id: "patch",
     target: nil,
-    visited: MapSet.new(),
+    visited: [],
     walked: 0,
     standoff: @default_standoff,
     step: @default_step
@@ -78,7 +78,7 @@ defmodule MontyCad.Policy.FeatureWalk do
           agent_id: atom() | String.t(),
           sensor_id: atom() | String.t(),
           target: target() | nil,
-          visited: MapSet.t(),
+          visited: [String.t()],
           walked: non_neg_integer(),
           standoff: float(),
           step: float()
@@ -161,15 +161,22 @@ defmodule MontyCad.Policy.FeatureWalk do
   @doc "A fresh episode forgets which features it has been to."
   @impl Monty.Frameworks.Models.MotorPolicies.MotorPolicy
   @spec reset(t()) :: t()
-  def reset(%__MODULE__{} = policy), do: %{policy | target: nil, visited: MapSet.new(), walked: 0}
+  def reset(%__MODULE__{} = policy), do: %{policy | target: nil, visited: [], walked: 0}
 
-  @doc "What the walk did, for a run that wants to be read afterwards."
+  @doc """
+  What the walk did, for a run that wants to be read afterwards.
+
+  Plain data — ids, counts, two numbers — because a policy's value is handed to
+  whoever keeps it, and a `MapSet` here made the walk a term whose own contract
+  no caller in another package could hand back (`mix dialyzer`'s
+  `call_without_opaque`, on the empty set a fresh walk holds).
+  """
   @impl Monty.Frameworks.Models.MotorPolicies.MotorPolicy
   @spec state_dict(t()) :: map()
   def state_dict(%__MODULE__{} = policy) do
     %{
       target: policy.target && policy.target.id,
-      visited: MapSet.to_list(policy.visited),
+      visited: policy.visited,
       walked: policy.walked,
       standoff: policy.standoff,
       step: policy.step
@@ -236,7 +243,7 @@ defmodule MontyCad.Policy.FeatureWalk do
   defp target_point(%__MODULE__{target: %{at: at}} = policy) when is_list(at), do: policy.target
 
   defp target_point(%__MODULE__{targets: targets, visited: visited}) do
-    case Enum.find(targets, &(not MapSet.member?(visited, &1.id))) do
+    case Enum.find(targets, &(&1.id not in visited)) do
       nil -> nil
       target -> target
     end
@@ -250,7 +257,7 @@ defmodule MontyCad.Policy.FeatureWalk do
     if face in target.faces, do: mark(policy, target.id), else: policy
   end
 
-  defp mark(policy, id), do: %{policy | target: nil, visited: MapSet.put(policy.visited, id)}
+  defp mark(policy, id), do: %{policy | target: nil, visited: [id | policy.visited]}
 
   # Where the sensor is, in the world, in millimetres, and which way it looks.
   defp sensor_pose(policy, state) do
