@@ -51,11 +51,20 @@ defmodule MontyCad.Percept do
   @doc """
   The observation a sensor module reads from this frame.
 
-  Options: `:semantic_id` (what an on-surface pixel is called, default `1`).
+  Options: `:semantic_id` (what an on-surface pixel is called, default `1`) and
+  `:units` — `:millimetres`, the part's own (the default), or `:metres`, the
+  framework's.
+
+  A part is millimetres and a run is metres, and one number decides the rest: the
+  points carry the unit, and the depths and the curvatures the processor fits
+  from them follow. A percept a run will match against therefore has to be asked
+  for in metres; a percept compared with the part's own coordinates stays in
+  millimetres.
   """
   @spec observation(Frame.t(), keyword()) :: observation()
   def observation(%Frame{} = frame, options \\ []) do
     semantic_id = Keyword.get(options, :semantic_id, 1)
+    units = Keyword.get(options, :units, :millimetres)
 
     %{
       "semantic_3d" => Frame.semantic_3d(frame, semantic_id: semantic_id),
@@ -64,6 +73,7 @@ defmodule MontyCad.Percept do
       "semantic" => frame |> labels() |> rows(frame.width),
       "cam_to_world" => Camera.cam_to_world(frame.camera)
     }
+    |> in_units(units)
   end
 
   @doc """
@@ -128,4 +138,35 @@ defmodule MontyCad.Percept do
     |> Enum.chunk_every(width)
     |> Enum.map(&Enum.map(&1, fn value -> value end))
   end
+
+  # Monty is metres; a part is millimetres. Only the points, the depths and the
+  # camera's translation carry a length — a colour, a semantic id and a rotation
+  # do not — and the processor fits its curvatures from these points, so scaling
+  # them is what makes a curvature 1/m rather than 1/mm.
+  @millimetres_per_metre 1000.0
+
+  defp in_units(observation, :metres) do
+    observation
+    |> Map.update!("semantic_3d", fn rows -> Enum.map(rows, &point_in_metres/1) end)
+    |> Map.update!("depth", fn rows ->
+      Enum.map(rows, fn row -> Enum.map(row, &length_in_metres/1) end)
+    end)
+    |> Map.update!("cam_to_world", &translated_in_metres/1)
+  end
+
+  defp in_units(observation, :millimetres), do: observation
+
+  # A point is `[x, y, z, semantic_id]`: the id is what a sensor model reads to
+  # decide which pixels are on the object, and it is not a distance.
+  defp point_in_metres([x, y, z, semantic_id]),
+    do: [length_in_metres(x), length_in_metres(y), length_in_metres(z), semantic_id]
+
+  defp translated_in_metres([first, second, third, last]),
+    do: [row_in_metres(first), row_in_metres(second), row_in_metres(third), last]
+
+  # A camera row is its basis and its origin: only the origin is a length.
+  defp row_in_metres([right, up, forward, origin]),
+    do: [right, up, forward, length_in_metres(origin)]
+
+  defp length_in_metres(millimetres), do: millimetres / @millimetres_per_metre
 end

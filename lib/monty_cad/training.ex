@@ -15,6 +15,16 @@ defmodule MontyCad.Training do
   is on and which feature that face belongs to — which is what makes this
   supervised: a node's feature family is read, never concluded.
 
+  ## Units
+
+  The library is the one a *run* loads, so it is written in the framework's
+  metres, not in the part's millimetres: locations, depths and curvatures are
+  what a sensor module would have measured in a run, and a graph in millimetres
+  matched against a world in metres disagrees by a thousand. The sampling dials
+  (`:spacing`, `:distance`) stay in millimetres, because they are about the
+  part's surface rather than about the framework. A caller that wants the part's
+  own frame says `units: :millimetres`.
+
   ## What this is not
 
   It is not a replacement for a training episode's *action* policy. the framework's
@@ -35,6 +45,8 @@ defmodule MontyCad.Training do
 
   @default_spacing 2.0
   @default_limit 2_000
+  # The framework reads metres; a part is millimetres. Only the percept converts.
+  @default_units :metres
   # A patch sensor stands a centimetre or two off the surface it reads. A
   # closer stand reads a smaller patch, so fewer visits straddle a face's edge
   # and are skipped for it.
@@ -63,6 +75,8 @@ defmodule MontyCad.Training do
     * `:min_coverage` — the share of a patch that must land on the part for the
       visit to count (default 0.6);
     * `:features` — the sensor's feature list, defaulting to a patch's;
+    * `:units` — `:metres` (default) for a library a run loads, or
+      `:millimetres` for the part's own frame;
     * `:progress` — a one-argument function called after each percept, for a
       caller that wants to show a count rather than wait.
 
@@ -80,7 +94,11 @@ defmodule MontyCad.Training do
              limit: Keyword.get(options, :limit, @default_limit)
            ) do
       visits = Enum.zip([samples.points, samples.normals, samples.faces])
-      node_options = Keyword.put(options, :recognition, recognition)
+
+      node_options =
+        options
+        |> Keyword.put_new(:units, @default_units)
+        |> Keyword.put(:recognition, recognition)
 
       nodes = Enum.map(visits, &visit(part, &1, node_options))
 

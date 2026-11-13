@@ -97,14 +97,30 @@ defmodule MontyCadTest do
       assert nodes != []
 
       for node <- nodes do
+        # A library is in the framework's metres and a part is in millimetres, so
+        # the lookup converts back: that conversion is the whole of the
+        # difference the units decision makes.
         assert {:ok, %{"nearest" => [%{"distance" => away} | _rest]}} =
-                 Quiddity.nearest(part, node.location)
+                 Quiddity.nearest(part, Enum.map(node.location, &(&1 * 1000.0)))
 
         assert_in_delta 0.0, away, 1.0e-3
 
         assert is_integer(node.face)
         assert node.features["pose_vectors"] != nil
         assert node.family in [nil, "holes", "bosses", "risers"]
+      end
+    end
+
+    test "a library from a part is in the run's metres, not the part's millimetres", %{part: part} do
+      {:ok, %{nodes: nodes}} = Training.nodes(part, spacing: 14.0, limit: 8)
+      {low_mm, high_mm} = Quiddity.Part.bounds(part)
+      low = Enum.map(low_mm, &(&1 / 1000.0))
+      high = Enum.map(high_mm, &(&1 / 1000.0))
+
+      for node <- nodes,
+          {coordinate, {low, high}} <- Enum.zip(node.location, Enum.zip(low, high)) do
+        assert coordinate >= low and coordinate <= high,
+               "expected #{inspect(node.location)} to be a point of the part in metres"
       end
     end
 

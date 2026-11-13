@@ -60,6 +60,11 @@ defmodule MontyCad.Library do
 
   @doc """
   The library as the records the file holds — one, for one object and channel.
+
+  Each feature is a column of **lists**, one per node, which is the shape the
+  framework's own export writes: a scalar feature is `[[1.0], [0.0], …]` there,
+  not `[1.0, 0.0, …]`, because a node's features are read as a vector and the
+  reader takes each column's width from its first value.
   """
   @spec records(t(), keyword()) :: [map()]
   def records(%__MODULE__{} = library, options \\ []) do
@@ -68,7 +73,10 @@ defmodule MontyCad.Library do
         "object_id" => library.object_id,
         "input_channel" => library.channel,
         "positions" => library.positions,
-        "features" => library.features,
+        "features" =>
+          Map.new(library.features, fn {name, column} ->
+            {name, Enum.map(column, &List.wrap/1)}
+          end),
         "lm_index" => Keyword.get(options, :lm_index, 0)
       }
     ]
