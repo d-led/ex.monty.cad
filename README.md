@@ -35,11 +35,11 @@ what is not.
 
 ## The three modules
 
-| Module | What it answers |
-| --- | --- |
-| `MontyCad.Percept` | A `Quiddity.Frame` as the observation a sensor module reads: `semantic_3d`, shaded `rgba`, `cam_to_world`, and the message Monty builds from them |
-| `MontyCad.Training` | Visits over the part's surface, one percept each, with exact labels from the recognition |
-| `MontyCad.Library` | The file: gzipped JSON lines, one record per node, in the shape `GraphLM` reads |
+| Module              | What it answers                                                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MontyCad.Percept`  | A `Quiddity.Frame` as the observation a sensor module reads: `semantic_3d`, shaded `rgba`, `cam_to_world`, and the message Monty builds from them |
+| `MontyCad.Training` | Visits over the part's surface, one percept each, with exact labels from the recognition                                                          |
+| `MontyCad.Library`  | The file: gzipped JSON lines, one record per node, in the shape `GraphLM` reads                                                                   |
 
 `MontyCad.Percept.node_features/1` merges the morphological and non-morphological
 features the way `GraphLM.select_features_to_use/2` does — those are the columns
@@ -52,6 +52,30 @@ a record stores.
 `--spacing` sets the millimetres between visits, `--limit` the most visits to
 make. The answer names the file, the nodes, the features held, and how many nodes
 each feature family contributed.
+
+## A policy that walks a part
+
+`MontyCad.Policy.FeatureWalk` is a motor policy that already decides something,
+and the shortest way to see what a policy with the geometry can do: each step it
+ray-casts from the sensor onto the exact surface, keeps the sensor a patch's
+standoff off it, and walks one step towards the next feature the part's
+recognition named — a hole's centre, a boss's top — until the ray lands on that
+feature's own faces. It never reads the observation or the percept, which is the
+point: a policy with the part knows where the next feature _is_.
+
+```elixir
+{:ok, part} = Quiddity.open("bracket.step")
+{:ok, recognition} = Quiddity.features(part)
+policy = MontyCad.Policy.FeatureWalk.new(part: part, recognition: recognition)
+
+MontyCad.Policy.FeatureWalk.describe()
+#=> %{"name" => "monty_cad.feature_walk", "kind" => :motor_policy,
+#     "placement" => :owner_only, "needs" => [:quiddity, :monty], ...}
+```
+
+It is `:owner_only` because it holds a B-rep, and it asks for `:quiddity` and
+`:monty` because it calls both — the `needs` a cluster checks against what the
+node carries before it routes a call there.
 
 ## Writing a plugin: the generators
 
@@ -66,10 +90,10 @@ the decision and not the wiring:
 
 Each writes a module and a test:
 
-| | `follow_chamfers` |
-| --- | --- |
+|            | `follow_chamfers`                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | the module | `lib/<your_app>/plugins/follow_chamfers.ex` — `Monty.Frameworks.Models.MotorPolicies.MotorPolicy`'s callbacks and `describe/0` |
-| the test | `test/<your_app>/plugins/follow_chamfers_test.exs` — it describes itself, it is a motor policy, it forgets between episodes |
+| the test   | `test/<your_app>/plugins/follow_chamfers_test.exs` — it describes itself, it is a motor policy, it forgets between episodes    |
 
 `call/6` and `call/3` raise with a sentence saying what to answer, on purpose: a
 generated body that looks like an answer is a decision nobody made. The policy is
