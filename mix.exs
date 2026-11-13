@@ -42,7 +42,7 @@ defmodule MontyCad.MixProject do
       # `@behaviour MontyPlugin`. From Hex, because a package that is published
       # cannot depend on a repository — and because the contract is exactly the
       # thing two packages must agree about, so agreement is a version.
-      {:ex_monty_plugin, "~> 0.1.1"},
+      {:ex_monty_plugin, "~> 0.1.2"},
 
       # The geometry: a part parsed once, ray cast exactly against the B-rep, so
       # a frame's points are on the surface rather than near it.
