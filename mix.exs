@@ -42,7 +42,7 @@ defmodule MontyCad.MixProject do
       # `@behaviour MontyPlugin`. It is a git dependency until the package is on
       # Hex, which is also why the release job refuses to publish a package with a
       # git dependency in it.
-      {:ex_monty_plugin, github: "d-led/ex_monty_plugin"},
+      {:ex_monty_plugin, github: "d-led/ex.monty.plugin"},
 
       # The geometry: a part parsed once, ray cast exactly against the B-rep, so
       # a frame's points are on the surface rather than near it.
