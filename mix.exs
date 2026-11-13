@@ -1,7 +1,7 @@
 defmodule MontyCad.MixProject do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.3.0"
   @source_url "https://github.com/d-led/ex.monty.cad"
 
   def project do
@@ -39,10 +39,10 @@ defmodule MontyCad.MixProject do
       # The plugin contract and its registry. A plugin's description is one map,
       # and two definitions of what belongs in it are two answers to one question;
       # this package's own copy is gone, so a generated policy declares
-      # `@behaviour MontyPlugin`. It is a git dependency until the package is on
-      # Hex, which is also why the release job refuses to publish a package with a
-      # git dependency in it.
-      {:ex_monty_plugin, github: "d-led/ex.monty.plugin"},
+      # `@behaviour MontyPlugin`. From Hex, because a package that is published
+      # cannot depend on a repository — and because the contract is exactly the
+      # thing two packages must agree about, so agreement is a version.
+      {:ex_monty_plugin, "~> 0.1.1"},
 
       # The geometry: a part parsed once, ray cast exactly against the B-rep, so
       # a frame's points are on the surface rather than near it.
