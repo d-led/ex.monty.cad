@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.6.2
+
+The front page is a map, and the release notes moved off it.
+
+### Changed
+
+- `README.md` had a paragraph about where the documentation is generated from as
+  its second paragraph — a fact about this repository, not about the package. It
+  is now part of a table of where each other question is answered: the modules in
+  the order a reader meets them, the bridge, the check, and the development page.
+- "Releasing" moved to `docs/development.md`, with the layout, the one rule this
+  package keeps (where the framework has an answer, the framework's answer is
+  called), the tests, and CI.
+- The API reference groups the modules a reader came for — `The join`,
+  `A policy with the part`, `Writing a plugin` (with its three mix tasks), and
+  `Where the files come from` — instead of `The join` and a loose list.
+
+## 0.6.1
+
+The percept a run can load, and a memory sampled per part.
+
+### Fixed
+
+- **Pose vectors are nine flat numbers.** Monty's export writes them that way; a
+  percept that wrote them shaped made a run crash in burst sampling on a CAD
+  memory.
+
+### Added
+
+- **`Training.write_library/3` and `Training.spacing/1`** — a memory of parts is
+  sampled per part, so a library of parts is not a library of densities.
+
 ## 0.6.0
 
 ### Changed

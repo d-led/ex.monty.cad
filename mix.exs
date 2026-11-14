@@ -1,7 +1,7 @@
 defmodule MontyCad.MixProject do
   use Mix.Project
 
-  @version "0.6.1"
+  @version "0.6.2"
   @source_url "https://github.com/d-led/ex.monty.cad"
 
   def project do
@@ -75,9 +75,20 @@ defmodule MontyCad.MixProject do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md", "docs/bridge.md"],
+      extras: ["README.md", "docs/bridge.md", "docs/development.md"],
       groups_for_modules: [
-        "The join": [MontyCad, MontyCad.Percept, MontyCad.Training, MontyCad.Library]
+        "The join": [MontyCad, MontyCad.Percept, MontyCad.Training, MontyCad.Library],
+        "A policy with the part": [MontyCad.Policy.FeatureWalk],
+        "Writing a plugin": [
+          MontyCad.Gen,
+          MontyCad.Gen.Policy,
+          MontyCad.Gen.Transform,
+          MontyCad.Plugin.Check,
+          Mix.Tasks.MontyCad.Gen.Policy,
+          Mix.Tasks.MontyCad.Gen.Transform,
+          Mix.Tasks.MontyCad.Plugin.Check
+        ],
+        "Where the files come from": [MontyCad.Inputs, MontyCad.Scene]
       ]
     ]
   end
