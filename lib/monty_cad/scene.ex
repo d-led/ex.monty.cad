@@ -104,6 +104,7 @@ defmodule MontyCad.Scene do
   @typedoc "What one pixel saw."
   @type observation :: %{
           on_object: boolean(),
+          semantic_id: non_neg_integer(),
           depth: float() | nil,
           rgba: [float()] | nil
         }
