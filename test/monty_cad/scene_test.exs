@@ -33,6 +33,15 @@ defmodule MontyCad.SceneTest do
     %{position: [x, y, z], rotation: Rotation.identity()}
   end
 
+  # A mask answers floats; a label map is keyed by the ids themselves.
+  defp name_of(scene, id) when is_float(id), do: name_of(scene, trunc(id))
+  defp name_of(scene, id), do: Map.fetch!(Scene.semantic_id_to_label(scene), id)
+
+  defp id_of(scene, name) do
+    {id, _name} = Enum.find(Scene.semantic_id_to_label(scene), fn {_id, n} -> n == name end)
+    id
+  end
+
   describe "what a sensor sees" do
     test "a depth is the distance along the sensor's axis, in metres", %{scene: scene} do
       assert_in_delta Scene.observe(scene, over_the_boss()).depth, @boss_top_depth_m, 1.0e-9
@@ -92,6 +101,63 @@ defmodule MontyCad.SceneTest do
 
     test "the id its pixels carry, so a log can name the part", %{scene: scene} do
       assert Scene.semantic_id_to_label(scene) == %{1 => "golden_simple_through_hole.step"}
+    end
+  end
+
+  describe "a part made of features" do
+    setup do
+      {:ok, part} = Quiddity.open(@fixture)
+      {:ok, recognition} = Quiddity.features(part)
+
+      %{
+        part: part,
+        recognition: recognition,
+        scene: Scene.new(part, label: "plate", recognition: recognition)
+      }
+    end
+
+    # The fixture's boss is a cylindrical face the recognition claims and a top
+    # face it does not. A sensor looking straight down lands on the top one, and
+    # the id it carries is the body's — a label that invented a boss there would
+    # be a label the geometry does not support.
+    test "a face the recognition could not explain is the body, not a feature", %{scene: scene} do
+      seen = Scene.observe(scene, over_the_boss())
+
+      assert name_of(scene, seen.semantic_id) == "plate body"
+    end
+
+    test "a view carries a feature's own id beside the body between them", %{scene: scene} do
+      names =
+        scene
+        |> Scene.render(over_the_boss(), resolution: 32)
+        |> Map.fetch!(:semantic)
+        |> List.flatten()
+        |> Enum.reject(&(&1 == 0.0))
+        |> Enum.uniq()
+        |> Enum.map(&name_of(scene, &1))
+
+      assert "risers/0" in names
+      assert "plate body" in names
+    end
+
+    test "the feature a run names is the episode's target", %{
+      part: part,
+      recognition: recognition
+    } do
+      id = id_of(Scene.new(part, recognition: recognition), "bosses/0")
+
+      target =
+        part
+        |> Scene.new(label: "plate", recognition: recognition, target: id)
+        |> Scene.primary_target()
+
+      assert %{"object_name" => "bosses/0", "semantic_id" => ^id} = target
+    end
+
+    test "without one, the target is what the start pose sees", %{scene: scene} do
+      seen = Scene.observe(scene, Scene.start_pose(scene))
+
+      assert Scene.primary_target(scene)["semantic_id"] == seen.semantic_id
     end
   end
 

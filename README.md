@@ -48,6 +48,28 @@ a record stores.
 make. The answer names the file, the nodes, the features held, and how many nodes
 each feature family contributed.
 
+## A part as the world an episode steps
+
+`MontyCad.Scene` answers what a sensor sees of a part. Given a recognition it also
+labels what it sees with the part's own features — one id per record, and the body
+for every face no feature claims — so a supervised episode learns a bore rather
+than a plate:
+
+```elixir
+{:ok, part} = Quiddity.open("bracket.step")
+{:ok, recognition} = Quiddity.features(part)
+scene = MontyCad.Scene.new(part, label: "bracket", recognition: recognition)
+
+MontyCad.Scene.semantic_id_to_label(scene)
+#=> %{1 => "bosses/0", 2 => "holes/0", 3 => "risers/0", 4 => "bracket body"}
+
+MontyCad.Scene.primary_target(scene)["object_name"]
+#=> the feature the start pose looks at
+```
+
+Every id is an answer the recognition gave: a face it could not explain carries
+the body's id, so nothing is labelled as a feature the geometry did not support.
+
 ## Install
 
 ```elixir

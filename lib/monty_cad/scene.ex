@@ -41,6 +41,16 @@ defmodule MontyCad.Scene do
   not what it is painted, and a part with no colour to perceive is not given an
   invented one.
 
+  ## Labels
+
+  A part with no recognition is one object: every pixel on it carries the same
+  id, which is what a world says before anybody asks what the part is made of.
+  Given a `Quiddity.Recognition`, the scene names its features instead — one id
+  per record, and the body as an id of its own for the faces no feature claims —
+  and the feature the start pose looks at becomes the episode's target. Those
+  ids are what a supervised run is taught from, and they are read, never
+  concluded.
+
   A pixel that met nothing answers depth `0.0`, which is what a depth image has
   where the camera saw nothing; an experiment's `MissingToMaxDepth` transform is
   what turns that into the furthest the sensor can see.
@@ -48,7 +58,7 @@ defmodule MontyCad.Scene do
 
   alias Monty.Frameworks.Utils.SpatialArithmetics
   alias Monty.Geometry.Rotation
-  alias Quiddity.{Frame, Part}
+  alias Quiddity.{Frame, Part, Recognition}
 
   @hfov 90.0
 
@@ -63,14 +73,33 @@ defmodule MontyCad.Scene do
   # What the camera sees where it sees nothing: no colour at all.
   @no_colour [0.0, 0.0, 0.0, 1.0]
 
-  # The semantic id the part's pixels carry. One part is one object; the
-  # background is 0, as every world in this port answers it.
-  @semantic_id 1
+  # The id a scene's pixels carry when the part is one object: nothing has said
+  # what the part is made of, so it is all one thing. The background is 0, as
+  # every world in this port answers it.
+  @part_id 1
 
   @enforce_keys [:part]
-  defstruct [:part, :label]
+  defstruct [:part, :label, :recognition, :target, ids: %{}, names: %{}, body: @part_id]
 
-  @type t :: %__MODULE__{part: Part.t(), label: String.t() | nil}
+  @typedoc """
+  The world: the part, and what its pixels are called.
+
+  `:recognition` is what makes a part more than one thing. Without it the part is
+  a single object; with it, every feature the recognition names is an object of
+  its own — `:ids` is the id each face carries, `:names` is what an id is called,
+  and `:body` is the id every face no feature claims carries. `:target` names the
+  id an episode is about, and is worked out from the start pose when it is not
+  given.
+  """
+  @type t :: %__MODULE__{
+          part: Part.t(),
+          label: String.t() | nil,
+          recognition: Recognition.t() | nil,
+          target: pos_integer() | nil,
+          ids: %{optional(non_neg_integer()) => pos_integer()},
+          names: %{optional(pos_integer()) => String.t()},
+          body: pos_integer()
+        }
 
   @typedoc "What one pixel saw."
   @type observation :: %{
@@ -94,7 +123,13 @@ defmodule MontyCad.Scene do
   @doc "A scene of a part already opened."
   @spec new(Part.t(), keyword()) :: t()
   def new(%Part{} = part, options \\ []) do
-    %__MODULE__{part: part, label: Keyword.get(options, :label)}
+    %__MODULE__{
+      part: part,
+      label: Keyword.get(options, :label),
+      recognition: Keyword.get(options, :recognition),
+      target: Keyword.get(options, :target)
+    }
+    |> labelled()
   end
 
   @doc """
@@ -120,14 +155,14 @@ defmodule MontyCad.Scene do
       |> Quiddity.frame(camera(eye, rotation, {height, width}, options))
       |> frame!()
 
-    rows = frame |> pixels(eye, forward) |> Enum.chunk_every(width)
+    rows = frame |> pixels(scene, eye, forward) |> Enum.chunk_every(width)
 
     %{
       depth: Enum.map(rows, &Enum.map(&1, fn pixel -> pixel.depth || 0.0 end)),
       rgba: Enum.map(rows, &Enum.map(&1, fn pixel -> pixel.rgba || @no_colour end)),
       semantic:
         Enum.map(rows, fn row ->
-          Enum.map(row, fn pixel -> if pixel.on_object, do: 1.0, else: 0.0 end)
+          Enum.map(row, fn pixel -> pixel.semantic_id * 1.0 end)
         end),
       centre: rows |> Enum.at(div(height, 2)) |> Enum.at(div(width, 2))
     }
@@ -138,19 +173,24 @@ defmodule MontyCad.Scene do
   def observe(%__MODULE__{} = scene, pose), do: render(scene, pose).centre
 
   @doc """
-  The object this episode is about: the part, named.
+  The object this episode is about.
 
-  A part is not sampled — the run is looking at the one it named — so the answer
-  is the part rather than a choice, which is what makes a supervised episode
-  possible here: Monty's `PrimaryTarget`, with the pose the part is at (the
-  identity, since a STEP file is the world when a part is the world) and the
-  rotation an experiment's supervision reads.
+  Without a `:recognition` it is the part, which is what a part is when nothing
+  has said what it is made of. With one, each feature is an object, and the one
+  the episode is about is the feature the start pose looks at — so a scene built
+  over a bore is about that bore, and a run need not be told twice.
+
+  Monty's `PrimaryTarget`: the object, with the pose the part is at (the identity,
+  since a STEP file is the world when a part is the world) and the rotation an
+  experiment's supervision reads.
   """
   @spec primary_target(t()) :: map()
   def primary_target(%__MODULE__{} = scene) do
+    id = target_id(scene)
+
     %{
-      "object_name" => scene.label,
-      "semantic_id" => @semantic_id,
+      "object_name" => Map.get(scene.names, id),
+      "semantic_id" => id,
       "position" => Enum.map(Part.centre(scene.part), &(&1 / @millimetres_per_metre)),
       "rotation" => [1.0, 0.0, 0.0, 0.0],
       "euler_rotation" => [0.0, 0.0, 0.0],
@@ -159,10 +199,9 @@ defmodule MontyCad.Scene do
     }
   end
 
-  @doc "What the id its pixels carry is called, so a log can name the part."
+  @doc "What the id its pixels carry is called, so a log can name what was seen."
   @spec semantic_id_to_label(t()) :: %{optional(integer()) => String.t()}
-  def semantic_id_to_label(%__MODULE__{label: nil}), do: %{}
-  def semantic_id_to_label(%__MODULE__{} = scene), do: %{@semantic_id => scene.label}
+  def semantic_id_to_label(%__MODULE__{names: names}), do: names
 
   @doc """
   Where a sensor starts, standing off the part.
@@ -216,21 +255,86 @@ defmodule MontyCad.Scene do
   # Depth is measured along the sensor's axis, not along the ray. The frame
   # answers the point each ray met exactly, so the axis distance is a dot
   # product rather than a correction by the pixel's angle.
-  defp pixels(frame, eye, forward) do
+  defp pixels(frame, scene, eye, forward) do
     [Frame.points(frame), Frame.face_ids(frame), Frame.rgba(frame)]
     |> Enum.zip_with(fn
       [_point, nil, _shade] ->
-        %{on_object: false, depth: nil, rgba: nil}
+        %{on_object: false, semantic_id: 0, depth: nil, rgba: nil}
 
-      [point, _face, shade] ->
+      [point, face, shade] ->
         %{
           on_object: true,
+          semantic_id: id_of(scene, face),
           depth:
             SpatialArithmetics.dot(SpatialArithmetics.subtract(point, eye), forward) /
               @millimetres_per_metre,
           rgba: unit(shade)
         }
     end)
+  end
+
+  # What a pixel that met `face` carries. A bare scene has no face map, so every
+  # face is the part; a labelled one names the feature the face belongs to, or the
+  # body when no feature claims it.
+  defp id_of(%__MODULE__{recognition: nil}, _face), do: @part_id
+  defp id_of(%__MODULE__{ids: ids, body: body}, face), do: Map.get(ids, face, body)
+
+  # The two halves of a label: which id each face carries, and what an id is
+  # called. A part with no recognition is one object; a part with one is a body
+  # plus a feature per record, so a supervised episode can learn stock as well as
+  # it learns a bore.
+  defp labelled(%__MODULE__{recognition: nil, label: nil} = scene),
+    do: %{scene | ids: %{}, names: %{}}
+
+  defp labelled(%__MODULE__{recognition: nil} = scene),
+    do: %{scene | ids: %{}, names: %{@part_id => scene.label}}
+
+  defp labelled(%__MODULE__{} = scene) do
+    recognition = scene.recognition
+
+    numbered =
+      recognition
+      |> Recognition.records()
+      |> Enum.with_index(@part_id)
+      |> Map.new(fn {record, id} -> {record["id"], id} end)
+
+    body = map_size(numbered) + @part_id
+
+    ids =
+      if recognition.face_count == 0 do
+        %{}
+      else
+        Map.new(0..(recognition.face_count - 1), fn face ->
+          {face, id_of_face(Recognition.owner(recognition, face), numbered, body)}
+        end)
+      end
+
+    names =
+      numbered
+      |> Map.new(fn {feature, id} -> {id, feature} end)
+      |> Map.put(body, body_name(scene))
+
+    %{scene | ids: ids, names: names, body: body}
+  end
+
+  defp id_of_face(feature, numbered, _body) when is_binary(feature),
+    do: Map.fetch!(numbered, feature)
+
+  defp id_of_face(_unclaimed, _numbered, body), do: body
+
+  defp body_name(%__MODULE__{label: nil}), do: "body"
+  defp body_name(%__MODULE__{label: label}), do: "#{label} body"
+
+  # The id an episode is about: the one named, or the one the start pose sees.
+  # A sensor that starts over nothing is about the body, which is the only honest
+  # answer — a part whose stock the sensor can see has no feature in view.
+  defp target_id(%__MODULE__{target: target}) when is_integer(target), do: target
+
+  defp target_id(%__MODULE__{} = scene) do
+    case scene |> observe(start_pose(scene)) |> Map.fetch!(:semantic_id) do
+      0 -> scene.body
+      id -> id
+    end
   end
 
   # A camera image's bytes as the port's scene answers colour: 0..1 per channel,

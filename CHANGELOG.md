@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- **A part's features as labels.** `MontyCad.Scene.new/2` takes a
+  `Quiddity.Recognition`, and the scene's mask then carries one id per feature
+  record instead of one id for the whole part; the faces no feature claims carry
+  the body's id, and `:target` — or, unset, the feature the start pose looks at —
+  is the object a supervised episode scores against. A face the recognition could
+  not explain carries the body's id, never a feature's.
+
 ### Removed
 
 - **`MontyCad.Policy.FeatureWalk`** — a motor policy that steered by the exact
