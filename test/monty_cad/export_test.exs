@@ -1,9 +1,10 @@
 defmodule MontyCad.ExportTest do
   @moduledoc """
-  A part's features as meshes.
+  A part's features as meshes, and the whole part as one.
 
   The cases are about the join the evaluation depends on: each mesh holds the
-  triangles of one feature's own faces, in metres, and the body holds the rest.
+  triangles of one feature's own faces, in metres, the body holds the rest, and
+  the whole part is the same surface in one piece under a name a memory can carry.
   """
 
   use ExUnit.Case, async: true
@@ -38,17 +39,21 @@ defmodule MontyCad.ExportTest do
     end
   end
 
-  test "a feature is a part of the part, not another mesh of it", %{meshes: meshes} do
-    total =
-      meshes
-      |> Enum.map(&length(&1.triangles))
-      |> Enum.sum()
+  test "the features and the body partition the part rather than covering it twice", %{
+    meshes: meshes
+  } do
+    total = meshes |> Enum.map(&length(&1.triangles)) |> Enum.sum()
 
-    {:ok, part} = Quiddity.open(@fixture)
-    {:ok, whole} = Quiddity.mesh(part, deflection: 0.01)
+    {:ok, whole} = Export.part_mesh(@fixture, name: "plate")
 
-    # Every triangle of the part is in exactly one mesh: the features and the
-    # body partition the surface rather than covering it twice.
     assert total == length(whole.triangles)
+  end
+
+  test "the whole part is one mesh under the name a memory would carry" do
+    {:ok, whole} = Export.part_mesh(@fixture, name: "plate")
+
+    assert whole.name == "plate"
+    assert whole.family == "plate"
+    assert whole.triangles != []
   end
 end

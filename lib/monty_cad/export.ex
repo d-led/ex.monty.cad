@@ -80,6 +80,31 @@ defmodule MontyCad.Export do
     |> Enum.sort_by(& &1.name)
   end
 
+  @doc """
+  The whole part as one mesh, under the name a memory of it would carry.
+
+  This is the evaluation's object: a memory trained on a part is compared against
+  a mesh of *that part*, not against one of its features, so the mesh has to be
+  the whole surface in one piece — the same geometry the CAD run ray cast, and
+  nothing else changed.
+
+  Options: `:name` (what the mesh is called, default `"part"`) and `:deflection`.
+  """
+  @spec part_mesh(Part.t() | Path.t(), keyword()) :: {:ok, mesh()} | {:error, term()}
+  def part_mesh(part_or_path, options \\ [])
+
+  def part_mesh(path, options) when is_binary(path) do
+    with {:ok, part} <- Quiddity.open(path), do: part_mesh(part, options)
+  end
+
+  def part_mesh(%Part{} = part, options) do
+    deflection = Keyword.get(options, :deflection, @default_deflection)
+
+    with {:ok, mesh} <- Quiddity.mesh(part, deflection: deflection) do
+      {:ok, one(Keyword.get(options, :name, "part"), mesh.triangles, mesh.points)}
+    end
+  end
+
   defp named(owner) when is_binary(owner), do: owner
   defp named(_unclaimed), do: @body
 
