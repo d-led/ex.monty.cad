@@ -204,9 +204,13 @@ defmodule MontyCad.Training do
 
     * `:spacing` — forced for every part, for reproducing a memory written
       before the rule above existed;
-    * `:limit`, `:distance`, `:min_coverage`, `:units` — as `nodes/2` reads them.
+    * `:limit`, `:distance`, `:min_coverage`, `:units` — as `nodes/2` reads them;
+    * `:labels` — what an object *is*. `:part` (the default) writes one object a
+      part; `:features` writes one object per feature the part is made of, so a
+      run can learn a bore rather than a lump. A feature's object is
+      `<part>/<feature id>` and the faces no feature claimed are `<part>/body`.
 
-  Answers the path, each part's contribution, and the total node count. A part
+  Answers the path, each object's contribution, and the total node count. A part
   that cannot be opened or sampled is an error, not a file missing that part: a
   memory that quietly holds four of five parts answers a question nobody asked.
   """
@@ -215,11 +219,13 @@ defmodule MontyCad.Training do
   def write_library([_ | _] = parts, path, options \\ []) do
     with {:ok, written} <- write_parts(parts, options),
          :ok <- Library.write_records(Enum.flat_map(written, & &1.records), path) do
+      objects = Enum.flat_map(written, & &1.objects)
+
       {:ok,
        %{
          path: path,
-         nodes: written |> Enum.map(& &1.nodes) |> Enum.sum(),
-         objects: Enum.map(written, &Map.delete(&1, :records))
+         nodes: objects |> Enum.map(& &1.nodes) |> Enum.sum(),
+         objects: objects
        }}
     end
   end
@@ -247,18 +253,75 @@ defmodule MontyCad.Training do
            |> Keyword.put(:recognition, recognition)
            |> Keyword.put(:spacing, spacing),
          {:ok, %{nodes: nodes} = visits} <- nodes(part, part_options),
-         {:ok, library} <- library(nodes, object_id, options) do
+         {:ok, objects} <-
+           objects_of(nodes, recognition, object_id, Keyword.get(options, :labels, :part)) do
       {:ok,
        %{
          object_id: object_id,
-         nodes: Library.size(library),
+         nodes: objects |> Enum.map(& &1.nodes) |> Enum.sum(),
          spacing: spacing,
          visited: visits.visited,
          skipped: visits.skipped,
          truncated: visits.truncated,
          families: visits.families,
-         records: Library.records(library)
+         records: Enum.flat_map(objects, & &1.records),
+         objects: Enum.map(objects, &Map.put(&1, :spacing, spacing))
        }}
+    end
+  end
+
+  # One object a part, or one an feature: the nodes grouped by the feature record
+  # that owns the face each was taken on. A face no feature claimed is the body —
+  # the stock a bore is cut into, which a compositional run learns as its own
+  # object rather than as part of every feature.
+  defp objects_of(nodes, _recognition, object_id, :part),
+    do: library_object(nodes, object_id)
+
+  defp objects_of(nodes, recognition, object_id, :features) do
+    nodes
+    |> Enum.group_by(fn node -> owner_of(recognition, node.face) end)
+    |> Enum.sort_by(fn {feature, _nodes} -> to_string(feature) end)
+    |> Enum.reduce_while({:ok, []}, fn {feature, group}, {:ok, objects} ->
+      case library_object(group, object_name(object_id, feature)) do
+        {:ok, [object]} -> {:cont, {:ok, [object | objects]}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, objects} -> {:ok, Enum.reverse(objects)}
+      error -> error
+    end
+  end
+
+  # The faces the body owns are one object: `Recognition.owner/2` answers `:body`
+  # for the stock and `:unaccounted` for a face nothing explained, and naming both
+  # `body` without merging them wrote two records under one object id — the file
+  # is keyed by object id, so the second would have replaced the first.
+  defp owner_of(recognition, face) do
+    case Recognition.owner(recognition, face) do
+      feature when is_binary(feature) -> feature
+      _body -> :body
+    end
+  end
+
+  defp object_name(object_id, :body), do: object_id <> "/body"
+  defp object_name(object_id, feature), do: object_id <> "/" <> feature
+
+  defp library_object(nodes, object_id) do
+    case library(nodes, object_id) do
+      {:ok, library} ->
+        {:ok,
+         [
+           %{
+             object_id: object_id,
+             nodes: Library.size(library),
+             families: nodes |> Enum.map(& &1.family) |> Enum.frequencies(),
+             records: Library.records(library)
+           }
+         ]}
+
+      {:error, _reason} = error ->
+        error
     end
   end
 

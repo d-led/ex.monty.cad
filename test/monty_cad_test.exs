@@ -290,6 +290,51 @@ defmodule MontyCadTest do
       assert [%{object_id: "plate", spacing: 2.0}] = written.objects
     end
 
+    # A compositional run learns the features a part is made of, which needs a
+    # memory whose objects *are* features: a bore is an object, not a slice of a
+    # graph that is called after the part.
+    @tag :tmp_dir
+    test "a memory can hold the part's features, one object each", %{tmp_dir: dir} do
+      path = Path.join(dir, "features.jsonl.gz")
+
+      assert {:ok, written} =
+               Training.write_library([{"plate", @fixture}], path,
+                 labels: :features,
+                 spacing: 14.0,
+                 limit: 40
+               )
+
+      ids = Enum.map(written.objects, & &1.object_id)
+
+      assert ids != ["plate"]
+      assert Enum.all?(ids, &String.starts_with?(&1, "plate/"))
+      # The file is keyed by object id, so two objects of one name would be one
+      # object in a run: the stock is one body however many faces it owns.
+      assert ids == Enum.uniq(ids)
+      assert Enum.all?(written.objects, &(&1.nodes > 0))
+
+      # Every node belongs to exactly one object: the split is of the part, not a
+      # second sampling of it.
+      assert written.nodes == written.objects |> Enum.map(& &1.nodes) |> Enum.sum()
+
+      # What a run loads is what was written.
+      assert path |> memory() |> Enum.map(& &1["object_id"]) |> Enum.sort() == Enum.sort(ids)
+    end
+
+    @tag :tmp_dir
+    test "and the stock no feature claimed is the body", %{tmp_dir: dir} do
+      assert {:ok, written} =
+               Training.write_library([{"plate", @fixture}], Path.join(dir, "features.jsonl.gz"),
+                 labels: :features,
+                 spacing: 14.0,
+                 limit: 40
+               )
+
+      # The plate's own faces are the stock a bore is cut into, and a body that
+      # were folded into a feature would teach that feature the whole part.
+      assert "plate/body" in Enum.map(written.objects, & &1.object_id)
+    end
+
     test "a part that cannot be opened is an error, not a shorter memory" do
       assert {:error, %Quiddity.Error{}} =
                Training.write_library([{"missing", "/nope/missing.step"}], "/tmp/never.jsonl.gz")
@@ -305,4 +350,13 @@ defmodule MontyCadTest do
   end
 
   defp length_of([x, y, z]), do: :math.sqrt(x * x + y * y + z * z)
+
+  # The records a memory file holds, as a run reads them.
+  defp memory(path) do
+    path
+    |> File.read!()
+    |> :zlib.gunzip()
+    |> String.split("\n", trim: true)
+    |> Enum.map(&Jason.decode!/1)
+  end
 end
