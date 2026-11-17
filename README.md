@@ -48,6 +48,16 @@ a record stores.
 make. The answer names the file, the nodes, the features held, and how many nodes
 each feature family contributed.
 
+`--labels features` writes the same part as a memory of *its features* — one
+object a bore, a boss, a plate, with the stock no feature claims as
+`bracket/body` — which is the memory a compositional run learns from:
+
+    mix monty_cad.train bracket.step --object bracket --labels features --out features.jsonl.gz
+
+The same split is available in the library as
+`MontyCad.Training.write_library/3`'s `labels: :features`. The bodies are one
+object however many faces they own, because a memory file is keyed by object id.
+
 ## A part as the world an episode steps
 
 `MontyCad.Scene` answers what a sensor sees of a part. Given a recognition it also
