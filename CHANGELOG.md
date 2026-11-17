@@ -4,6 +4,12 @@
 
 ### Added
 
+- **A memory whose objects are the features.** `MontyCad.Training.write_library/3`
+  takes `labels: :features` and writes one object per feature record of the part
+  — `<part>/<feature>` — with the stock no feature claims as `<part>/body`, so a
+  compositional run learns a bore rather than the lump a bore is cut into. The
+  body and the faces the recognition could not explain are one object: the file is
+  keyed by object id, and two records under one id are one object to a run.
 - **A part's features as labels.** `MontyCad.Scene.new/2` takes a
   `Quiddity.Recognition`, and the scene's mask then carries one id per feature
   record instead of one id for the whole part; the faces no feature claims carry
