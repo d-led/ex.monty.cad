@@ -56,4 +56,18 @@ defmodule MontyCad.ExportTest do
     assert whole.family == "plate"
     assert whole.triangles != []
   end
+
+  test "every mesh is grey, so its colour says nothing about the feature", %{meshes: meshes} do
+    for mesh <- meshes do
+      assert {shade, shade, shade} = mesh.colour
+    end
+  end
+
+  test "and the grey is the one the exact world's shading reads, hue and saturation zero" do
+    {:ok, whole} = Export.part_mesh(@fixture, name: "plate")
+
+    assert {red, green, blue} = whole.colour
+    assert red == blue, "a blue cast is a hue the exact world never shows"
+    assert green == blue
+  end
 end

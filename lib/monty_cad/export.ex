@@ -20,6 +20,13 @@ defmodule MontyCad.Export do
   the pixels — a sensor reading `hsv` would recognise a bore by the colour
   somebody chose for bores — so there is one colour for all of them, and a run
   comparing features should not ask for `hsv` at all.
+
+  *Neutral* is not decoration. The CAD world's `rgba` is shading and its hue is
+  0, so a mesh whose blue is one step off red teaches a hue the exact world
+  never shows: a learning module that matches `hsv` then spends every
+  observation inside a tolerance it cannot meet, and the memory recognises the
+  part while earning half the evidence it should. Lighting cannot repair it
+  either — a hue is what the paint is, and a light can only scale it.
   """
 
   alias Quiddity.{Part, Recognition}
@@ -30,6 +37,11 @@ defmodule MontyCad.Export do
   # a coarse one is a different shape. A hundredth of a millimetre is below what
   # a sensor's patch can resolve at its standoff.
   @default_deflection 0.01
+
+  # Equal channels, so hue and saturation are 0 — the values the exact world's
+  # shading shows, whatever light either world applies. Raising the value moves
+  # every mesh to one grey; that is a measurement, not a style.
+  @grey {0.72, 0.72, 0.72}
 
   @body "body"
 
@@ -120,7 +132,7 @@ defmodule MontyCad.Export do
         Enum.map(triangles, fn [a, b, c] ->
           [Map.fetch!(place, a), Map.fetch!(place, b), Map.fetch!(place, c)]
         end),
-      colour: {0.72, 0.72, 0.75}
+      colour: @grey
     }
   end
 
