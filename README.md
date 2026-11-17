@@ -156,6 +156,33 @@ the released version is on [HexDocs](https://hexdocs.pm/ex_monty_cad).
 - A node whose patch saw too little surface is skipped and counted, not stored:
   an empty percept is not a node.
 
+## Citation
+
+The percept this package speaks — features, pose vectors, a library of
+locations — is Monty's, so the papers that describe Monty are the ones to cite.
+The package is citable too: [`CITATION.cff`](CITATION.cff) is what GitHub's
+*Cite this repository* button reads, and Zenodo mints a DOI for each release.
+
+```bibtex
+@article{clay2024thousandbrains,
+  title   = {The Thousand Brains Project: A New Paradigm for Sensorimotor Intelligence},
+  author  = {Clay, Viviane and Leadholm, Niels and Hawkins, Jeff},
+  journal = {arXiv preprint arXiv:2412.18354},
+  year    = {2024},
+  url     = {https://arxiv.org/abs/2412.18354}
+}
+
+@article{hawkins2019framework,
+  title   = {A Framework for Intelligence and Cortical Function Based on Grid Cells in the Neocortex},
+  author  = {Hawkins, Jeff and Lewis, Marcus and Klukas, Mirko and Purdy, Scott and Ahmad, Subutai},
+  journal = {Frontiers in Neural Circuits},
+  volume  = {12},
+  pages   = {121},
+  year    = {2019},
+  doi     = {10.3389/fncir.2018.00121}
+}
+```
+
 ## Licence
 
 MPL-2.0 (`LICENSE`). The dependencies keep their own: `ex_quiddity` is MPL-2.0,
