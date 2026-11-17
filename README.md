@@ -115,7 +115,7 @@ plugin and fails somewhere else.
 ```elixir
 def deps do
   [
-    {:ex_monty_cad, "~> 0.6.2"}
+    {:ex_monty_cad, "~> 0.6.3"}
   ]
 end
 ```
