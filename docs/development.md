@@ -10,10 +10,9 @@ what it targets, where the pieces are, and how a version is published.
 | `lib/monty_cad/percept.ex`          | a `Quiddity.Frame` as the observation a sensor module reads         |
 | `lib/monty_cad/training.ex`         | visits over a part's surface, one percept each                      |
 | `lib/monty_cad/library.ex`          | the file: gzipped JSON lines in the shape `GraphLM` reads           |
-| `lib/monty_cad/policy/feature_walk.ex` | the motor policy that walks a part with the recognition in hand  |
-| `lib/monty_cad/gen.ex`, `gen/*.ex`  | what the two generators write, and the module and test they produce  |
-| `lib/monty_cad/plugin/check.ex`     | the plugin check CI runs                                            |
-| `lib/mix/tasks/*.ex`                | `monty_cad.train`, `monty_cad.gen.policy`, `monty_cad.gen.transform`, `monty_cad.plugin.check` |
+| `lib/monty_cad/inputs.ex`           | where a part and a library are looked for                           |
+| `lib/monty_cad/scene.ex`            | a part as the world an episode steps                                |
+| `lib/mix/tasks/*.ex`                | `monty_cad.train`                                                   |
 | `docs/bridge.md`                    | what is the framework's own code, what is ours, and what is neither |
 
 ## The framework it targets
@@ -31,9 +30,8 @@ columns those names imply.
 
 ## Tests
 
-`mix test` covers the join, the generators (they write a module and a test that
-compiles and passes), the plugin check, the feature-walk policy, and the training
-task end to end against the fixtures. `scripts/quality.sh` is what CI runs.
+`mix test` covers the join and the training task end to end against the
+fixtures. `scripts/quality.sh` is what CI runs.
 
 ## CI and publishing
 

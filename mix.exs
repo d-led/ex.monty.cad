@@ -36,14 +36,6 @@ defmodule MontyCad.MixProject do
       # being written is a graph of something else.
       {:ex_tbp_monty_core, "~> 0.1.2"},
 
-      # The plugin contract and its registry. A plugin's description is one map,
-      # and two definitions of what belongs in it are two answers to one question;
-      # this package's own copy is gone, so a generated policy declares
-      # `@behaviour MontyPlugin`. From Hex, because a package that is published
-      # cannot depend on a repository — and because the contract is exactly the
-      # thing two packages must agree about, so agreement is a version.
-      {:ex_monty_plugin, "~> 0.1.2"},
-
       # The geometry: a part parsed once, ray cast exactly against the B-rep, so
       # a frame's points are on the surface rather than near it.
       {:ex_quiddity, "~> 0.1"},
@@ -78,17 +70,8 @@ defmodule MontyCad.MixProject do
       extras: ["README.md", "docs/bridge.md", "docs/development.md"],
       groups_for_modules: [
         "The join": [MontyCad, MontyCad.Percept, MontyCad.Training, MontyCad.Library],
-        "A policy with the part": [MontyCad.Policy.FeatureWalk],
-        "Writing a plugin": [
-          MontyCad.Gen,
-          MontyCad.Gen.Policy,
-          MontyCad.Gen.Transform,
-          MontyCad.Plugin.Check,
-          Mix.Tasks.MontyCad.Gen.Policy,
-          Mix.Tasks.MontyCad.Gen.Transform,
-          Mix.Tasks.MontyCad.Plugin.Check
-        ],
-        "Where the files come from": [MontyCad.Inputs, MontyCad.Scene]
+        "Where the files come from": [MontyCad.Inputs, MontyCad.Scene],
+        "The memory a run loads": [Mix.Tasks.MontyCad.Train]
       ]
     ]
   end

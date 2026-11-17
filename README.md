@@ -48,68 +48,6 @@ a record stores.
 make. The answer names the file, the nodes, the features held, and how many nodes
 each feature family contributed.
 
-## A policy that walks a part
-
-`MontyCad.Policy.FeatureWalk` is a motor policy that already decides something,
-and the shortest way to see what a policy with the geometry can do: each step it
-ray-casts from the sensor onto the exact surface, keeps the sensor a patch's
-standoff off it, and walks one step towards the next feature the part's
-recognition named — a hole's centre, a boss's top — until the ray lands on that
-feature's own faces. It never reads the observation or the percept, which is the
-point: a policy with the part knows where the next feature _is_.
-
-```elixir
-{:ok, part} = Quiddity.open("bracket.step")
-{:ok, recognition} = Quiddity.features(part)
-policy = MontyCad.Policy.FeatureWalk.new(part: part, recognition: recognition)
-
-MontyCad.Policy.FeatureWalk.describe()
-#=> %{"name" => "monty_cad.feature_walk", "kind" => :motor_policy,
-#     "placement" => :owner_only, "needs" => [:quiddity, :monty], ...}
-```
-
-It is `:owner_only` because it holds a B-rep, and it asks for `:quiddity` and
-`:monty` because it calls both — the `needs` a cluster checks against what the
-node carries before it routes a call there.
-
-## Writing a plugin: the generators
-
-A run is assembled from modules — a motor policy that decides where to sense
-next, a sensor transform that turns one observation into a percept. Each has a
-contract in the framework's own behaviour, and a cluster that will call it wants a
-description of it first. Two generators write both halves, so what you fill in is
-the decision and not the wiring:
-
-    mix monty_cad.gen.policy follow_chamfers
-    mix monty_cad.gen.transform surface_smoother
-
-Each writes a module and a test:
-
-|            | `follow_chamfers`                                                                                                              |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| the module | `lib/<your_app>/plugins/follow_chamfers.ex` — `Monty.Frameworks.Models.MotorPolicies.MotorPolicy`'s callbacks and `describe/0` |
-| the test   | `test/<your_app>/plugins/follow_chamfers_test.exs` — it describes itself, it is a motor policy, it forgets between episodes    |
-
-`call/6` and `call/3` raise with a sentence saying what to answer, on purpose: a
-generated body that looks like an answer is a decision nobody made. The policy is
-`:owner_only` (it reads a B-rep, and a B-rep handle cannot leave its node); change
-that in `describe/0` if yours does not, and the test will follow the description.
-
-The description is `MontyPlugin`'s contract — kinds, placements, needs — and
-`MontyPlugin.conforms?/1` says what is wrong with one that a cluster cannot
-use. A cluster asks over the protocol; this package asks the same question in a
-test.
-
-## Checking them
-
-    mix monty_cad.plugin.check
-
-Every module of your application that describes itself as a plugin, checked
-against the contract: the description conforms, and the callbacks its kind
-requires are exported. Run it in CI — the compiler refuses a missing callback, but
-a description is a map, and a map drifts in silence until a run asks for the
-plugin and fails somewhere else.
-
 ## Install
 
 ```elixir
@@ -131,9 +69,8 @@ compiled, so **building wants a Rust toolchain and running wants none**.
 | A frame as the observation a sensor module reads              | [`MontyCad.Percept`](https://hexdocs.pm/ex_monty_cad/MontyCad.Percept.html)            |
 | Visits over a part, one percept each                          | [`MontyCad.Training`](https://hexdocs.pm/ex_monty_cad/MontyCad.Training.html)           |
 | The library file a run loads                                  | [`MontyCad.Library`](https://hexdocs.pm/ex_monty_cad/MontyCad.Library.html)             |
-| A policy that walks a part                                    | [`MontyCad.Policy.FeatureWalk`](https://hexdocs.pm/ex_monty_cad/MontyCad.Policy.FeatureWalk.html) |
-| What the generators write, and what to fill in                | [`MontyCad.Gen`](https://hexdocs.pm/ex_monty_cad/MontyCad.Gen.html)                     |
-| The check to run in CI                                        | [`MontyCad.Plugin.Check`](https://hexdocs.pm/ex_monty_cad/MontyCad.Plugin.Check.html)   |
+| Where a part and a library are found                          | [`MontyCad.Inputs`](https://hexdocs.pm/ex_monty_cad/MontyCad.Inputs.html)               |
+| A part as the world an episode steps                          | [`MontyCad.Scene`](https://hexdocs.pm/ex_monty_cad/MontyCad.Scene.html)                 |
 | What is faithful to the framework and what is not             | [`bridge`](https://hexdocs.pm/ex_monty_cad/bridge.html)                                |
 | Working on the package: the framework it targets, tests, releasing | [`development`](https://hexdocs.pm/ex_monty_cad/development.html)                |
 

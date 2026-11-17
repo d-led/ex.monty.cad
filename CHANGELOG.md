@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### Removed
+
+- **`MontyCad.Policy.FeatureWalk`** — a motor policy that steered by the exact
+  geometry. It decided, at every step, what the experiment was meant to measure,
+  and under it the sensor barely moved: the patch stopped being a new observation.
+  The package's job is the part-to-memory join, not a decision-maker.
+- **`MontyCad.Gen`, `MontyCad.Gen.Policy`, `MontyCad.Gen.Transform`,
+  `monty_cad.gen.policy`, `monty_cad.gen.transform`** — generators for plugin
+  modules. A memory needs no plugin, so the scaffolding went with the policy.
+- **`MontyCad.Plugin.Check` and `mix monty_cad.plugin.check`** — the check existed
+  to validate the descriptions of the plugins above.
+- **The `ex_monty_plugin` dependency**, which only those modules used.
+
+`MontyCad.Percept`, `Training`, `Library`, `Inputs` and `Scene` are unchanged.
+
 ## 0.6.2
 
 The front page is a map, and the release notes moved off it.
