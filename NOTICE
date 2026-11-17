@@ -19,3 +19,12 @@ It builds on work by others, whose licences it keeps:
 
 The STEP test fixture under `test/fixtures/` came from quiddity's own test suite,
 which takes it from public sources; each file names its source beside it.
+
+The plate under `test/fixtures/solidcraft_sample_plate.step` is an unmodified
+STEP export of SolidCraft's own sample plate.
+
+  * SolidCraft — https://github.com/tangency-labs/solidcraft — MIT OR Apache-2.0,
+    Copyright (c) SolidCraft contributors. It is a parametric CAD modeller whose
+    examples are JSON models (`examples/*.json`); the fixture is what
+    `solidcraft-cli run <model>.json --out <part>.step` writes. The model is used
+    as geometry only: nothing of SolidCraft is linked, copied or modified here.
