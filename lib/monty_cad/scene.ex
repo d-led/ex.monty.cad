@@ -112,13 +112,34 @@ defmodule MontyCad.Scene do
   The part at `path` as a scene.
 
   `:label` is what the part is called — a run's record names what it stepped.
+  `:labelled` asks the recognition what the part is made of and gives every
+  feature an id of its own; `:recognition` passes one already read. A part that
+  cannot be recognised is an error rather than a scene labelled as one object,
+  because a run told it would be taught features must not be taught a lump.
   """
   @spec open(Path.t(), keyword()) :: {:ok, t()} | {:error, Quiddity.Error.t()}
   def open(path, options \\ []) do
-    with {:ok, part} <- Quiddity.open(path) do
-      {:ok, new(part, Keyword.put_new(options, :label, Path.basename(path)))}
+    with {:ok, part} <- Quiddity.open(path),
+         {:ok, recognition} <- recognition(part, options) do
+      options =
+        options
+        |> Keyword.put_new(:label, Path.basename(path))
+        |> put_recognition(recognition)
+
+      {:ok, new(part, options)}
     end
   end
+
+  defp recognition(part, options) do
+    case {Keyword.fetch(options, :recognition), Keyword.get(options, :labelled, false)} do
+      {{:ok, recognition}, _asked} -> {:ok, recognition}
+      {:error, true} -> Quiddity.features(part)
+      {:error, false} -> {:ok, nil}
+    end
+  end
+
+  defp put_recognition(options, nil), do: Keyword.delete(options, :recognition)
+  defp put_recognition(options, recognition), do: Keyword.put(options, :recognition, recognition)
 
   @doc "A scene of a part already opened."
   @spec new(Part.t(), keyword()) :: t()

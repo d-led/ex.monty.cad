@@ -159,6 +159,17 @@ defmodule MontyCad.SceneTest do
 
       assert Scene.primary_target(scene)["semantic_id"] == seen.semantic_id
     end
+
+    test "asking for labels reads the recognition, and asking for none does not" do
+      {:ok, labelled} = Scene.open(@fixture, labelled: true)
+      {:ok, plain} = Scene.open(@fixture)
+
+      names = Map.values(Scene.semantic_id_to_label(labelled))
+
+      assert "bosses/0" in names
+      assert Enum.any?(names, &String.ends_with?(&1, "body"))
+      assert Scene.semantic_id_to_label(plain) == %{1 => "golden_simple_through_hole.step"}
+    end
   end
 
   describe "a part as a world's scene" do
