@@ -35,6 +35,45 @@ defmodule Mix.Tasks.MontyCad.TrainTest do
     assert report =~ "Features held per node:"
   end
 
+  # A compositional run needs a memory whose objects are features, and the task is
+  # the way to make one without the studio's script.
+  @tag :tmp_dir
+  test "a feature memory is several objects in one file", %{tmp_dir: dir} do
+    out = Path.join(dir, "features.jsonl.gz")
+
+    report =
+      capture_io(fn ->
+        Train.run([
+          @fixture,
+          "--object",
+          "plate",
+          "--out",
+          out,
+          "--labels",
+          "features",
+          "--spacing",
+          "14",
+          "--limit",
+          "40"
+        ])
+      end)
+
+    assert File.exists?(out)
+    assert report =~ "object(s)"
+    # Each line names an object of the part, never the part as one lump.
+    assert report =~ "  plate/"
+    assert report =~ "plate/body"
+  end
+
+  test "a labels value this task does not have is refused" do
+    error =
+      assert_raise Mix.Error, ~r/labels is `part` or `features`/, fn ->
+        Train.run([@fixture, "--object", "plate", "--labels", "widget"])
+      end
+
+    assert Exception.message(error) =~ "widget"
+  end
+
   @tag :tmp_dir
   test "the object name is required, because the file may not guess it", %{tmp_dir: dir} do
     out = Path.join(dir, "plate.jsonl.gz")
