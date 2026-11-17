@@ -8,8 +8,9 @@ authors:
     website: "https://github.com/d-led"
 repository-code: "https://github.com/d-led/ex.monty.cad"
 license: MPL-2.0
-version: "0.6.2"
-date-released: "2026-11-14"
+version: "0.6.3"
+date-released: "2026-11-17"
+doi: 10.5281/zenodo.24313922
 abstract: >-
   The join between an exact CAD part and Monty's own percept and library
   format: a sample of a B-rep's surface becomes the features a sensor module
@@ -22,8 +23,7 @@ keywords:
   - B-rep
   - sensorimotor
   - Elixir
-# Zenodo mints a DOI for each GitHub release; add it as `doi:` once the first
-# release has been archived.
+# `doi` is the concept DOI: it always resolves to the latest archived release.
 references:
   - type: article
     title: "The Thousand Brains Project: A New Paradigm for Sensorimotor Intelligence"
