@@ -230,6 +230,11 @@ defmodule MontyCadTest do
 
       assert Enum.all?(features["pose_vectors"], &(length(&1) == 9))
       assert Enum.all?(features["pose_vectors"], &(length(Enum.chunk_every(&1, 3)) == 3))
+
+      # A boolean is a number here, as it is in Monty's own libraries: the
+      # matcher keeps float columns, and a `true` in one killed the learning
+      # module on the first percept made from this memory.
+      assert Enum.all?(features["pose_fully_defined"], fn [value] -> is_float(value) end)
     end
   end
 

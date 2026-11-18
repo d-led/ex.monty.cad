@@ -132,6 +132,13 @@ defmodule MontyCad.Percept do
   defp flatten(%Monty.Geometry.SurfacePoseVectors{value: rows}), do: List.flatten(rows)
 
   defp flatten(values) when is_list(values), do: Enum.map(values, &flatten/1)
+
+  # A boolean is a number in the format Monty's own libraries use:
+  # `pose_fully_defined` travels as `1.0`/`0.0`, not as `true`/`false`. The
+  # matcher keeps its columns as floats, and a memory carrying booleans killed
+  # the learning module on the first percept it made from one
+  # (`Hypotheses.values_bytes/1`: `bad argument in arithmetic expression`).
+  defp flatten(value) when is_boolean(value), do: if(value, do: 1.0, else: 0.0)
   defp flatten(value), do: value
 
   defp labels(frame) do
