@@ -51,6 +51,14 @@ defmodule MontyCad.Training do
   # closer stand reads a smaller patch, so fewer visits straddle a face's edge
   # and are skipped for it.
   @default_distance 5.0
+  # The crate's own patch is 66° wide. A run's patch is whatever its camera
+  # makes of `zoom`, and Monty's MuJoCo agent builds
+  # `fovy = 2·atan2(ratio·tan(base_fovh/2), zoom)` from a 90° base, so the
+  # tutorial's `zoom: 10` reads 11.4° — a patch six times narrower than this
+  # default. A memory taught through the wider patch stores curvature and depth
+  # averaged over a swath no percept of the run contains, which is why a caller
+  # that knows its sensor passes `:fov_x`.
+  @default_fov_x 66.0 * :math.pi() / 180.0
   # How many visits a part gets across its largest extent: the dial that makes
   # two parts of different sizes comparable, and the same idea as the framework's
   # own `num_model_voxels_per_dim` (`spacing/1`).
@@ -76,6 +84,10 @@ defmodule MontyCad.Training do
     * `:limit` — the most visits to make (default 2 000);
     * `:distance` — how far the sensor stands off the surface (default 5 mm,
       which keeps a patch's footprint smaller than a face on most parts);
+    * `:fov_x` — the patch's horizontal field of view, in radians (default 66°).
+      A feature memory must be taught through the same field of view the run's
+      patch makes, or the node's features are an average over a swath the run
+      never sees in one percept;
     * `:min_coverage` — the share of a patch that must land on the part for the
       visit to count (default 0.6);
     * `:features` — the sensor's feature list, defaulting to a patch's;
@@ -328,10 +340,7 @@ defmodule MontyCad.Training do
   defp visit(part, {point, normal, face}, options) do
     recognition = Keyword.fetch!(options, :recognition)
 
-    with {:ok, camera} <-
-           Camera.patch(point, normal,
-             distance: Keyword.get(options, :distance, @default_distance)
-           ),
+    with {:ok, camera} <- Camera.patch(point, normal, camera_options(options)),
          {:ok, frame} <- Quiddity.frame(part, camera),
          :ok <- sees_surface(frame, options),
          {:ok, message} <- Percept.message(frame, options) do
@@ -347,6 +356,18 @@ defmodule MontyCad.Training do
       {:error, %Quiddity.Error{}} -> :skipped
       :off_surface -> :skipped
     end
+  end
+
+  # The two knobs that decide what a patch sees, in the form the camera crate
+  # takes them: how far it stands off the surface, and how wide its field of view
+  # is. Both are the run's to name — a memory is a record of what that sensor
+  # perceived, and a memory photographed from a different distance or through a
+  # different lens is a memory of a different surface.
+  defp camera_options(options) do
+    [
+      distance: Keyword.get(options, :distance, @default_distance),
+      fov_x: Keyword.get(options, :fov_x, @default_fov_x)
+    ]
   end
 
   # A visit on a face's edge sees mostly off the part: the centre pixel misses,

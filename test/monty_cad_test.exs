@@ -163,6 +163,27 @@ defmodule MontyCadTest do
       assert skipped > 0
       assert Enum.all?(nodes, &(&1.coverage >= 0.6))
     end
+
+    test "the patch's field of view is the caller's, and it changes what a node is", %{
+      part: part
+    } do
+      # A run's patch is whatever its camera makes of `zoom` — Monty's `zoom: 10`
+      # reads 11.4° — while this crate's own default is 66°. At the run's own
+      # stand-off the wide patch straddles a face's edge from further away, so
+      # more of its visits are dropped and the memory it writes is thinner.
+      narrow = 11.42 * :math.pi() / 180.0
+
+      {:ok, %{nodes: wide, skipped: wide_skipped}} =
+        Training.nodes(part, spacing: 2.0, limit: 200, distance: 8.0)
+
+      {:ok, %{nodes: tight, skipped: tight_skipped}} =
+        Training.nodes(part, spacing: 2.0, limit: 200, distance: 8.0, fov_x: narrow)
+
+      assert wide_skipped > 0
+      assert tight_skipped < wide_skipped
+      assert length(tight) > length(wide)
+      assert Enum.all?(tight, &Map.has_key?(&1.features, "principal_curvatures_log"))
+    end
   end
 
   describe "the library a run loads" do
