@@ -43,6 +43,38 @@ defmodule MontyCad.Assembly do
     end)
   end
 
+  @doc """
+  Several meshes as one, at the places their placements put them.
+
+  The world draws one object per directory, so an assembly's mesh is every
+  instance's triangles in one set of vertices, moved into the assembly's frame —
+  the same transform as `place/3`, at the mesh's own level: vertices only, since
+  a triangle is three indices and a placement does not renumber them. The name
+  and colour are the first instance's; an assembly is one object and wears its
+  own.
+  """
+  @spec meshes([{map(), placement()}], :metres | :millimetres) :: map()
+  def meshes([{first, _placement} | _rest] = placed, units \\ :metres) do
+    {vertices, triangles, _next} =
+      Enum.reduce(placed, {[], [], 0}, fn {mesh, placement}, {vs, ts, next} ->
+        moved = mesh_vertices(mesh, placement, units)
+
+        triangles =
+          Enum.map(mesh.triangles, fn [a, b, c] -> [a + next, b + next, c + next] end)
+
+        {vs ++ moved, ts ++ triangles, next + length(moved)}
+      end)
+
+    %{first | vertices: vertices, triangles: triangles}
+  end
+
+  defp mesh_vertices(mesh, placement, units) do
+    {rotation, column} = rotation_and_translation(placement)
+    translation = Enum.map(column, &scale(&1, units))
+
+    Enum.map(mesh.vertices, &add(translation, rotate(rotation, &1)))
+  end
+
   # The 3×4 rows a file writes, split into the rotation and the column that
   # places the part's origin.
   defp rotation_and_translation([[_, _, _, _] = a, [_, _, _, _] = b, [_, _, _, _] = c]) do

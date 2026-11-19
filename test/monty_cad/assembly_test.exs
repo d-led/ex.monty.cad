@@ -20,6 +20,34 @@ defmodule MontyCad.AssemblyTest do
   # Ninety degrees about z, then the part's origin 10 mm along x.
   @quarter_turn [[0, -1, 0, 10], [1, 0, 0, 0], [0, 0, 1, 0]]
 
+  describe "several meshes as one object" do
+    defp triangle(left) do
+      %{
+        name: "part",
+        family: "part",
+        vertices: [[left, 0.0, 0.0], [left + 0.01, 0.0, 0.0], [left, 0.01, 0.0]],
+        triangles: [[0, 1, 2]],
+        colour: [0.7, 0.7, 0.7]
+      }
+    end
+
+    test "puts every instance's triangles where its placement puts them" do
+      right = [[1, 0, 0, 10], [0, 1, 0, 0], [0, 0, 1, 0]]
+
+      merged =
+        Assembly.meshes([
+          {triangle(0.0), [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]},
+          {triangle(0.0), right}
+        ])
+
+      assert length(merged.vertices) == 6
+      assert merged.triangles == [[0, 1, 2], [3, 4, 5]]
+      assert Enum.min(Enum.map(merged.vertices, &hd/1)) == 0.0
+      assert_in_delta Enum.max(Enum.map(merged.vertices, &hd/1)), 0.02, 1.0e-9
+      assert merged.name == "part"
+    end
+  end
+
   describe "a part placed in an assembly frame" do
     test "its nodes move to where the placement puts them" do
       [placed] = Assembly.place([visited()], @quarter_turn)
