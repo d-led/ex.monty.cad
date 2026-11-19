@@ -53,6 +53,17 @@ run's.
 The answer says how many visits were made and how many were skipped, so the
 number of nodes is never a mystery.
 
+A visit is also skipped when the learning module would refuse its percept.
+Monty's sensor module hands a patch over only when the surface normal *and* the
+curvature fit came out (`process_features_in_lm`), and a node keeps exactly the
+features that percept carried — so a visit whose fit failed would store no
+curvature at all. That node cannot be scored: its row is shorter than the
+features a matcher compares, so hypotheses born at it never earn evidence, and
+one such hypothesis empties the possible set at every later step (the band
+`Hypotheses.indices_within/3` reads is numpy's `np.max`, which propagates the
+NaN). The episode then never concludes, however long it explores. Measured on the
+plate: two visits in 2 113 stored nodes.
+
 ### Labels
 
 Each node carries the face it was placed on and the family quiddity assigned that

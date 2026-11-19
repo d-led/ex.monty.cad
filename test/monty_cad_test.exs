@@ -164,6 +164,37 @@ defmodule MontyCadTest do
       assert Enum.all?(nodes, &(&1.coverage >= 0.6))
     end
 
+    test "a node is stored only if a learning module would be handed its percept", %{part: part} do
+      # A patch whose surface fit failed is never handed to a module in a run
+      # (`process_features_in_lm`), and a node built from one holds no curvature
+      # at all: its row is shorter than the features a matcher compares, so
+      # hypotheses born at it never earn evidence and one of them empties every
+      # later step's possible set — an episode that can never conclude. The
+      # plate at a run's own patch keeps exactly two such visits.
+      narrow = 11.4222 * :math.pi() / 180.0
+
+      {:ok, %{nodes: nodes, visited: visited, skipped: skipped}} =
+        Training.nodes(part,
+          spacing: 5.0 / 3.0,
+          limit: 20_000,
+          distance: 25.0,
+          fov_x: narrow
+        )
+
+      assert length(nodes) == visited - skipped
+
+      for node <- nodes do
+        assert [first, second] = node.features["principal_curvatures_log"]
+        assert is_float(first) and is_float(second)
+
+        # A frame is a normal and two directions: without a direction there is
+        # no rotation for a hypothesis born here, and the node is unscoreable
+        # for a different reason.
+        assert [_n1, _n2, _n3, d1, d2, d3, k1, k2, k3] = node.features["pose_vectors"]
+        assert Enum.any?([d1, d2, d3, k1, k2, k3], &(&1 != 0.0))
+      end
+    end
+
     test "the patch's field of view is the caller's, and it changes what a node is", %{
       part: part
     } do

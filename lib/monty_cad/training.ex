@@ -43,6 +43,8 @@ defmodule MontyCad.Training do
   alias MontyCad.{Assembly, Library, Percept}
   alias Quiddity.{Camera, Frame, Part, Recognition}
 
+  alias Monty.Cmp.Message
+
   @default_spacing 2.0
   @default_limit 2_000
   # The framework reads metres; a part is millimetres. Only the percept converts.
@@ -99,7 +101,11 @@ defmodule MontyCad.Training do
   A visit whose patch does not see the surface — a corner sharper than the
   patch's field of view, or a face the rays miss — is *skipped*, not invented:
   the node count is what the sensor could perceive, and `:skipped` in the answer
-  says how many visits it was.
+  says how many visits it was. A visit whose percept the learning module would
+  refuse is skipped for the same reason: a patch whose surface normal or
+  curvature fit failed is never handed to a module in a run
+  (`process_features_in_lm`), so a memory that stored it would hold a node no
+  run could score.
   """
   @spec nodes(Part.t(), keyword()) :: {:ok, map()} | {:error, Quiddity.Error.t()}
   def nodes(%Part{} = part, options \\ []) do
@@ -392,7 +398,8 @@ defmodule MontyCad.Training do
     with {:ok, camera} <- Camera.patch(point, normal, camera_options(options)),
          {:ok, frame} <- Quiddity.frame(part, camera),
          :ok <- sees_surface(frame, options),
-         {:ok, message} <- Percept.message(frame, options) do
+         {:ok, message} <- Percept.message(frame, options),
+         :ok <- learned(message) do
       {:ok,
        %{
          location: Enum.map(message.location, &(&1 * 1.0)),
@@ -404,6 +411,7 @@ defmodule MontyCad.Training do
     else
       {:error, %Quiddity.Error{}} -> :skipped
       :off_surface -> :skipped
+      :no_signals -> :skipped
     end
   end
 
@@ -430,4 +438,19 @@ defmodule MontyCad.Training do
 
     if face != nil and Frame.coverage(frame) >= enough, do: :ok, else: :off_surface
   end
+
+  # A percept the learning module would not be handed is not something a memory
+  # can hold. Monty's own sensor sends a patch only when the surface normal and
+  # the curvature fit are both valid (`process_features_in_lm`), and a node keeps
+  # exactly the features that percept carried — so a visit whose fit failed would
+  # be stored with an empty curvature column and a zero curvature direction.
+  #
+  # Such a node cannot be scored by a run: its row is shorter than the features
+  # the matcher compares, so hypotheses born at it hold no evidence, and one
+  # unscoreable hypothesis empties the possible set for every later step
+  # (`Hypotheses.indices_within/3`, which reads numpy's `np.max` and so
+  # propagates the NaN). The episode then never concludes, however long it
+  # explores — measured on the plate, two such visits in 2 113 nodes.
+  defp learned(%Message{process_features_in_lm: true}), do: :ok
+  defp learned(%Message{}), do: :no_signals
 end
