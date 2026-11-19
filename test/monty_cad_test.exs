@@ -187,6 +187,46 @@ defmodule MontyCadTest do
   end
 
   describe "the library a run loads" do
+    @tag :tmp_dir
+    test "an assembly is one object holding every part where the file puts it", %{
+      tmp_dir: dir
+    } do
+      # The same part twice, the second instance a centimetre along x. One object
+      # is what a parent is; two clusters 10 mm apart is the arrangement being in
+      # the nodes rather than in a second record.
+      identity = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]
+      moved = [[1, 0, 0, 10], [0, 1, 0, 0], [0, 0, 1, 0]]
+      path = Path.join(dir, "pair.jsonl.gz")
+
+      {:ok, written} =
+        Training.write_assembly(
+          [{"left", @fixture, identity}, {"right", @fixture, moved}],
+          "pair",
+          path,
+          spacing: 14.0,
+          limit: 12
+        )
+
+      assert written.object_id == "pair"
+      assert written.nodes > 0
+
+      positions =
+        path
+        |> File.read!()
+        |> :zlib.gunzip()
+        |> String.split("\n", trim: true)
+        |> Enum.flat_map(&(&1 |> Jason.decode!() |> Map.fetch!("positions")))
+
+      assert [_one, _two] = Enum.uniq(Enum.map(positions, &(&1 |> Enum.at(0) |> Float.round(0))))
+      # The instances were sampled twice and moved apart: the span of x is the
+      # part's own width plus the placement's centimetre.
+      span =
+        Enum.max(Enum.map(positions, &Enum.at(&1, 0))) -
+          Enum.min(Enum.map(positions, &Enum.at(&1, 0)))
+
+      assert span > 0.01
+    end
+
     test "holds one column per feature, as long as its node list", %{part: part} do
       {:ok, %{nodes: nodes}} = Training.nodes(part, spacing: 14.0, limit: 12)
       {:ok, library} = Training.library(nodes, "through_hole_plate")

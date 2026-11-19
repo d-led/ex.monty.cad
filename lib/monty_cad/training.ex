@@ -40,7 +40,7 @@ defmodule MontyCad.Training do
   honest dial.
   """
 
-  alias MontyCad.{Library, Percept}
+  alias MontyCad.{Assembly, Library, Percept}
   alias Quiddity.{Camera, Frame, Part, Recognition}
 
   @default_spacing 2.0
@@ -240,6 +240,55 @@ defmodule MontyCad.Training do
          objects: objects
        }}
     end
+  end
+
+  @doc """
+  Several parts as one object: the memory of an assembly.
+
+  `instances` is `[{name, path, placement}]`, each placement quiddity's 3×4 rows
+  in millimetres (`Quiddity.parts/1` answers those). Every part is sampled with
+  `nodes/2`'s options and its nodes are moved into the assembly's frame
+  (`MontyCad.Assembly.place/3`), so the one object this library holds is the
+  assembly's geometry at the places the file puts its parts — which is what a
+  parent that holds an arrangement of its children is taught from.
+
+  `name` is provenance, not a graph id: the library holds one object under
+  `object_id`, and that is the name a run answers with.
+  """
+  @spec write_assembly(
+          [{String.t(), Path.t(), Assembly.placement()}],
+          String.t(),
+          Path.t(),
+          keyword()
+        ) ::
+          {:ok, map()} | {:error, Quiddity.Error.t()}
+  def write_assembly([_ | _] = instances, object_id, path, options \\ []) do
+    with {:ok, nodes} <- placed_nodes(instances, options),
+         {:ok, library} <- library(nodes, object_id, options),
+         :ok <- Library.write(library, path) do
+      {:ok,
+       %{
+         path: path,
+         object_id: object_id,
+         nodes: Library.size(library),
+         instances: Enum.map(instances, fn {name, part_path, _} -> {name, part_path} end),
+         features: Library.feature_names(library)
+       }}
+    end
+  end
+
+  defp placed_nodes(instances, options) do
+    units = Keyword.get(options, :units, @default_units)
+
+    instances
+    |> Enum.reduce_while({:ok, []}, fn {_name, part_path, placement}, {:ok, placed} ->
+      with {:ok, part} <- Quiddity.open(part_path),
+           {:ok, %{nodes: nodes}} <- nodes(part, options) do
+        {:cont, {:ok, placed ++ Assembly.place(nodes, placement, units)}}
+      else
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
   end
 
   defp write_parts(parts, options) do
